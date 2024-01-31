@@ -1,0 +1,20 @@
+FROM python:3.11.5-bookworm
+
+RUN pip install --no-cache-dir poetry==1.7.1
+
+COPY pyproject.toml poetry.lock ./
+
+RUN export CI_JOB_TOKEN=$(cat /kaniko/CI_JOB_TOKEN) && \
+    git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.gistools.geog.uni-heidelberg.de".insteadOf "ssh://git@gitlab.gistools.geog.uni-heidelberg.de:2022"
+
+RUN poetry install --no-ansi --no-interaction --all-extras --without dev --no-root
+
+COPY ./api_gateway ./api_gateway
+COPY ./conf ./conf
+COPY ./README.md ./README.md
+
+RUN poetry install --no-ansi --no-interaction --all-extras --without dev
+
+SHELL ["/bin/bash", "-c"]
+ENTRYPOINT poetry run python ./api_gateway/app/api.py
+EXPOSE 8000

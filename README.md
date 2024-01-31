@@ -1,92 +1,74 @@
-# api-gateway
+## API Gateway
 
+This package features a REST-API that serves as a gateway between the user realm and the backend of the climate action architecture.
+It provides endpoints to list available plugins, trigger computation tasks and retrieve computation results.
+Each computation generates a correlation id that uniquely identifies a computation request.
+Result retrieval is bound to these ids in a two-step procedure:
 
+1. All results generated through a given id can be listed. The list remains empty as long as the computation is not finished or in case it failed.
+2. The listed results (artifacts) provide a `store_uuid` which is a unique identifier for that element. The element can then be downloaded in a second API call.
 
-## Getting started
+For more information see the API swagger documentation.
+Yet, the swagger documentation interface does not well display the `/computation/` endpoint which provides a [WebSocket](https://en.wikipedia.org/wiki/WebSocket): `ws://localhost:8000/computation/` (trailing `/` is mandatory). The websocket will provide status updates on computation tasks. The optional `correlation_uuid` parameter allows you to filter events by a specific computation request. A 3-second heartbeat is required. To test the websocket you can use tools like [websockets-cli](https://pypi.org/project/websockets-cli/).
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+One example for a user realm application is the [climate action frontend/web-app](https://gitlab.gistools.geog.uni-heidelberg.de/climate-action/web-app).
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+## Run
 
-## Add your files
+The API is embedded in a full event-driven architecture.
+All interaction with that architecture is provided by the [climatoology](https://gitlab.gistools.geog.uni-heidelberg.de/climate-action/climatoology) package.
+It requires multiple services such as [minIO](https://min.io/) and [RabbitMQ](https://www.rabbitmq.com/) to be available and the respective environment variables to be set.
+The simplest way to do so, is using docker.
+You can use the [infrastructure repository](https://gitlab.gistools.geog.uni-heidelberg.de/climate-action/infrastructure) to set up the architecture.
+Afterward copy [`.env_template`](.env_template) to `.env` and fill in the necessary environment variables.
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+### Direct run
 
+Set the environment variables
+
+```shell
+export $(cat .env)
 ```
-cd existing_repo
-git remote add origin https://gitlab.gistools.geog.uni-heidelberg.de/climate-action/api-gateway.git
-git branch -M main
-git push -uf origin main
+
+then start the api
+
+```shell
+ poetry run python api_gateway/app/api.py
 ```
 
-## Integrate with your tools
+and head to [localhost:8000](localhost:8000/docs) to check out the results.
 
-- [ ] [Set up project integrations](https://gitlab.gistools.geog.uni-heidelberg.de/climate-action/api-gateway/-/settings/integrations)
+Of course, you won't see much until you also launch a plugin that can answer your calls. You can try the [plugin-blueprint](https://gitlab.gistools.geog.uni-heidelberg.de/climate-action/plugin-blueprint) or any other plugin listed in the [infrastructure repository](https://gitlab.gistools.geog.uni-heidelberg.de/climate-action/infrastructure).
 
-## Collaborate with your team
+### Docker
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+The tool is also [Dockerised](Dockerfile):
 
-## Test and Deploy
+```shell
+docker build . --tag heigit/ca-api-gateway:devel
+docker run --env-file .env --network=host heigit/ca-api-gateway:devel
+```
 
-Use the built-in continuous integration in GitLab.
+and head to the link above.
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+To run behind a proxy, you can configure the root path using the environment variable `ROOT_PATH`.
 
-***
+#### Deploy
 
-# Editing this README
+Build the image as described above. To push a new version to [Docker Hub](https://hub.docker.com/orgs/heigit) run
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
+```shell
+docker image push heigit/ca-api-gateway:devel
+```
 
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
 
-## Name
-Choose a self-explaining name for your project.
+### Further Optional Parameters
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+| env var                    | description                                    |
+|----------------------------|------------------------------------------------|
+| MINIO_BUCKET               | the minio bucket to use for storage            |
+| MINIO_SECURE               | set to True to enable SSL in Minio connections |
+| FILE_CACHE                 | location where files are temporarily stored    |
+| API_GATEWAY_APP_CONFIG_DIR | The directory holding configuration files      |
+| API_GATEWAY_API_PORT       | The port, the api should start under           |
+| LOG_LEVEL                  | The api logging level                          |
