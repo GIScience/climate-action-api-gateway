@@ -12,7 +12,7 @@ websocket = "^0.2.1"
 uvicorn = { extras = ["standard"], version = "^0.23.2" }
 cachetools = "^5.3.1"
 async-cache = "^1.1.1"
-climatoology = { git = "ssh://git@gitlab.gistools.geog.uni-heidelberg.de:2022/climate-action/climatoology.git", rev = "3.0.2" }
+climatoology = { git = "ssh://git@gitlab.gistools.geog.uni-heidelberg.de:2022/climate-action/climatoology.git", rev = "3.0.3" }
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.4.0"
