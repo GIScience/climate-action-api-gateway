@@ -232,7 +232,7 @@ def fetch_artifact(correlation_uuid: UUID, store_id: str) -> FileResponse:
     file_path = app.state.storage.fetch(correlation_uuid=correlation_uuid,
                                         store_id=store_id)
 
-    if not file_path and file_path.is_file():
+    if not file_path or not file_path.is_file():
         raise HTTPException(status_code=404, detail=f'The requested element {correlation_uuid}/{store_id} does '
                                                     'not exist!')
     return FileResponse(path=file_path)
