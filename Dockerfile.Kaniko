@@ -7,9 +7,8 @@ RUN pip install --no-cache-dir poetry==1.7.1
 COPY pyproject.toml poetry.lock ./
 
 RUN export CI_JOB_TOKEN=$(cat /kaniko/CI_JOB_TOKEN) && \
-    git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.gistools.geog.uni-heidelberg.de".insteadOf "ssh://git@gitlab.gistools.geog.uni-heidelberg.de:2022"
-
-RUN poetry install --no-ansi --no-interaction --all-extras --without dev --no-root
+    git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.gistools.geog.uni-heidelberg.de".insteadOf "ssh://git@gitlab.gistools.geog.uni-heidelberg.de:2022" && \
+    poetry install --no-ansi --no-interaction --all-extras --without dev --no-root
 
 COPY $PACKAGE_NAME $PACKAGE_NAME
 COPY conf conf

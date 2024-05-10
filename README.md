@@ -45,7 +45,7 @@ Of course, you won't see much until you also launch a plugin that can answer you
 The tool is also [Dockerised](Dockerfile):
 
 ```shell
-docker build . --tag heigit/ca-api-gateway:devel
+DOCKER_BUILDKIT=1 docker build --secret id=CI_JOB_TOKEN . --tag heigit/ca-api-gateway:devel
 docker run --env-file .env --network=host heigit/ca-api-gateway:devel
 ```
 
