@@ -14,18 +14,17 @@ import yaml
 from aio_pika import ExchangeType
 from aiormq import ChannelClosed, ChannelNotFoundEntity
 from cache import AsyncTTL
-from fastapi import APIRouter, FastAPI, WebSocket, HTTPException
-from fastapi.responses import FileResponse
-from hydra import compose
-from pydantic.dataclasses import dataclass
-from starlette.websockets import WebSocketDisconnect
-
 from climatoology.base.artifact import _Artifact
 from climatoology.base.event import ComputeCommandStatus, ComputeCommandResult
 from climatoology.base.operator import Info, Concern
 from climatoology.broker.message_broker import AsyncRabbitMQ, RabbitMQManagementAPI
 from climatoology.store.object_store import MinioStorage
 from climatoology.utility.exception import InfoNotReceivedException, ClimatoologyVersionMismatchException
+from fastapi import APIRouter, FastAPI, WebSocket, HTTPException
+from fastapi.responses import FileResponse
+from hydra import compose
+from pydantic.dataclasses import dataclass
+from starlette.websockets import WebSocketDisconnect
 
 config_dir = os.getenv('API_GATEWAY_APP_CONFIG_DIR', str(Path('conf').absolute()))
 
@@ -189,31 +188,32 @@ async def plugin_compute(plugin_id: str, params: dict) -> CorrelationIdObject:
 @computation.websocket(path='/')
 async def subscribe_compute_status(websocket: WebSocket, correlation_uuid: UUID = None) -> None:
     async with app.state.broker.connection_pool.acquire() as connection:
-        async with connection.channel() as channel:
+        channel = await connection.channel()
 
-            await websocket.accept()
+    async def subscribe_callback(message):
+        status = ComputeCommandResult.model_validate_json(message.body.decode())
+        if not correlation_uuid or status.correlation_uuid == correlation_uuid:
+            await websocket.send_json(status.model_dump_json())
 
-            async def subscribe_callback(message):
-                status = ComputeCommandResult.model_validate_json(message.body.decode())
-                if not correlation_uuid or status.correlation_uuid == correlation_uuid:
-                    await websocket.send_json(status.model_dump_json())
+    try:
+        await websocket.accept()
 
-            try:
-                exchange = await channel.declare_exchange(app.state.broker.get_status_exchange(), ExchangeType.FANOUT)
-                queue = await channel.declare_queue(exclusive=True)
-                await queue.bind(exchange)
-                await queue.consume(subscribe_callback)
-                log.info(f'Websocket {queue.name} interaction has been started')
+        exchange = await channel.declare_exchange(app.state.broker.get_status_exchange(), ExchangeType.FANOUT)
+        queue = await channel.declare_queue(exclusive=True)
+        await queue.bind(exchange)
+        await queue.consume(subscribe_callback)
+        log.info(f'Websocket {queue.name} interaction has been started')
 
-                while True:
-                    await asyncio.wait_for(websocket.receive_json(), timeout=10.0)
+        while True:
+            await asyncio.wait_for(websocket.receive_json(), timeout=10.0)
 
-            except (TimeoutError, WebSocketDisconnect):
-                log.info(f'Websocket {queue.name} interaction has been finished')
-            except ChannelClosed:
-                log.exception(f'Websocket {queue.name} interaction has been abruptly finished')
-            finally:
-                await queue.delete(if_unused=False, if_empty=False)
+    except (TimeoutError, WebSocketDisconnect):
+        log.info(f'Websocket {queue.name} interaction has been finished')
+    except ChannelClosed:
+        log.exception(f'Websocket {queue.name} interaction has been abruptly finished')
+    finally:
+        await queue.delete(if_unused=False, if_empty=False)
+        await channel.close()
 
 
 @store.get(path='/{correlation_uuid}',
