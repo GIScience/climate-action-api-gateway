@@ -50,25 +50,31 @@ async def configure_dependencies(app: FastAPI):
     hydra.initialize_config_dir(config_dir=config_dir, version_base=None)
     cfg = compose(config_name='config')
 
-    app.state.storage = MinioStorage(host=cfg.store.host,
-                                     port=int(cfg.store.port),
-                                     access_key=cfg.store.access_key,
-                                     secret_key=cfg.store.secret_key,
-                                     secure=cfg.store.secure == 'True',
-                                     bucket=cfg.store.bucket,
-                                     file_cache=Path(cfg.store.file_cache))
-    app.state.broker = AsyncRabbitMQ(host=cfg.broker.host,
-                                     port=int(cfg.broker.port),
-                                     user=cfg.broker.user,
-                                     password=cfg.broker.password,
-                                     connection_pool_max_size=int(cfg.broker.connection_pool_max_size),
-                                     assert_plugin_version=cfg.broker.assert_plugin_version == 'True')
+    app.state.storage = MinioStorage(
+        host=cfg.store.host,
+        port=int(cfg.store.port),
+        access_key=cfg.store.access_key,
+        secret_key=cfg.store.secret_key,
+        secure=cfg.store.secure == 'True',
+        bucket=cfg.store.bucket,
+        file_cache=Path(cfg.store.file_cache),
+    )
+    app.state.broker = AsyncRabbitMQ(
+        host=cfg.broker.host,
+        port=int(cfg.broker.port),
+        user=cfg.broker.user,
+        password=cfg.broker.password,
+        connection_pool_max_size=int(cfg.broker.connection_pool_max_size),
+        assert_plugin_version=cfg.broker.assert_plugin_version == 'True',
+    )
 
     await app.state.broker.async_init()
 
-    app.state.broker_management_api = RabbitMQManagementAPI(api_url=cfg.broker.api_url,
-                                                            user=cfg.broker.user,
-                                                            password=cfg.broker.password)
+    app.state.broker_management_api = RabbitMQManagementAPI(
+        api_url=cfg.broker.api_url,
+        user=cfg.broker.user,
+        password=cfg.broker.password,
+    )
 
     log.debug('dependencies configured')
     yield
@@ -88,12 +94,12 @@ tags_metadata = [
     {
         'name': 'computation',
         'description': 'Inquire about currently running computations.'
-                       'This endpoint implements a WebSocket.'
-                       'It has one optional parameter (correlation_uuid) that is used to filter updates by.'
-                       'The WebSocket will push updates in json format on the status of currently running computations.'
-                       'Be aware that you will only be sent future updates. Any historic states are lost.'
-                       'If you need the full set of states, make sure to subscribe to all notifications '
-                       'and then filter on your side.',
+        'This endpoint implements a WebSocket.'
+        'It has one optional parameter (correlation_uuid) that is used to filter updates by.'
+        'The WebSocket will push updates in json format on the status of currently running computations.'
+        'Be aware that you will only be sent future updates. Any historic states are lost.'
+        'If you need the full set of states, make sure to subscribe to all notifications '
+        'and then filter on your side.',
     },
     {
         'name': 'store',
@@ -119,12 +125,11 @@ app = FastAPI(
         'email': 'climate-action@heigit.org',
     },
     openapi_tags=tags_metadata,
-    lifespan=configure_dependencies)
+    lifespan=configure_dependencies,
+)
 
 
-@health.get(path='/',
-            status_code=200,
-            summary='Hey, is this thing on?')
+@health.get(path='/', status_code=200, summary='Hey, is this thing on?')
 def is_ok() -> dict:
     return {'status': 'ok'}
 
@@ -137,51 +142,52 @@ async def list_plugins(plugin_names: Tuple) -> List[Info]:
             plugin = await app.state.broker.request_info(plugin_name)
             plugin_list.append(plugin)
         except InfoNotReceivedException as e:
-            log.warning(f'Plugin {plugin_name} has an open channel but could not be reached.',
-                        exc_info=e)
+            log.warning(f'Plugin {plugin_name} has an open channel but could not be reached.', exc_info=e)
             continue
         except ClimatoologyVersionMismatchException as e:
-            log.warning(f'Version mismatch for plugin {plugin_name}',
-                        exc_info=e)
+            log.warning(f'Version mismatch for plugin {plugin_name}', exc_info=e)
             continue
 
     return plugin_list
 
 
-@plugin.get(path='/',
-            summary='List all currently available plugins.')
+@plugin.get(path='/', summary='List all currently available plugins.')
 async def plugins() -> List[Info]:
     plugin_names = app.state.broker_management_api.get_active_plugins()
     plugin_names.sort()
     return await list_plugins(tuple(plugin_names))
 
 
-@plugin.get(path='/{plugin_id}',
-            summary='Get information on a specific plugin or check its online status.')
+@plugin.get(path='/{plugin_id}', summary='Get information on a specific plugin or check its online status.')
 async def get_plugin(plugin_id: str) -> Info:
     try:
         return await app.state.broker.request_info(plugin_id=plugin_id)
     except InfoNotReceivedException as e:
         raise HTTPException(status_code=404, detail=f'Plugin {plugin_id} does not exist.') from e
     except ClimatoologyVersionMismatchException as e:
-        raise HTTPException(status_code=500,
-                            detail=f'Plugin {plugin_id} is not in a correct state (version mismatch).') from e
+        raise HTTPException(
+            status_code=500, detail=f'Plugin {plugin_id} is not in a correct state (version mismatch).'
+        ) from e
 
 
-@plugin.post(path='/{plugin_id}',
-             summary='Schedule a computation task on a plugin.',
-             description='The parameters depend on the chosen plugin. '
-                         'Their input schema can be requested from the /plugin GET methods.')
+@plugin.post(
+    path='/{plugin_id}',
+    summary='Schedule a computation task on a plugin.',
+    description='The parameters depend on the chosen plugin. '
+    'Their input schema can be requested from the /plugin GET methods.',
+)
 async def plugin_compute(plugin_id: str, params: dict) -> CorrelationIdObject:
     correlation_uuid = uuid.uuid4()
     try:
         await app.state.broker.send_compute(plugin_id, params, correlation_uuid)
     except ChannelNotFoundEntity as e:
-        await app.state.broker.publish_status_update(correlation_uuid=correlation_uuid,
-                                                     status=ComputeCommandStatus.FAILED)
+        await app.state.broker.publish_status_update(
+            correlation_uuid=correlation_uuid, status=ComputeCommandStatus.FAILED
+        )
         raise HTTPException(status_code=404, detail='The plugin is not online.') from e
-    await app.state.broker.publish_status_update(correlation_uuid=correlation_uuid,
-                                                 status=ComputeCommandStatus.SCHEDULED)
+    await app.state.broker.publish_status_update(
+        correlation_uuid=correlation_uuid, status=ComputeCommandStatus.SCHEDULED
+    )
     return CorrelationIdObject(correlation_uuid)
 
 
@@ -216,31 +222,36 @@ async def subscribe_compute_status(websocket: WebSocket, correlation_uuid: UUID 
         await channel.close()
 
 
-@store.get(path='/{correlation_uuid}',
-           summary='List all artifacts associated with a correlation uuid.',
-           description='Note that this list may be emtpy if the computation has not been started '
-                       'or is not yet completed. '
-                       'To receive actual content you need to use the store uuid returned.')
+@store.get(
+    path='/{correlation_uuid}',
+    summary='List all artifacts associated with a correlation uuid.',
+    description='Note that this list may be emtpy if the computation has not been started or is not yet completed. '
+    'To receive actual content you need to use the store uuid returned.',
+)
 def list_artifacts(correlation_uuid: UUID) -> List[_Artifact]:
     return app.state.storage.list_all(correlation_uuid=correlation_uuid)
 
 
-@store.get(path='/{correlation_uuid}/{store_id}',
-           summary='Download a specific file.',
-           description='The store_id can be parsed from the listing endpoint.')
+@store.get(
+    path='/{correlation_uuid}/{store_id}',
+    summary='Download a specific file.',
+    description='The store_id can be parsed from the listing endpoint.',
+)
 def fetch_artifact(correlation_uuid: UUID, store_id: str) -> FileResponse:
-    file_path = app.state.storage.fetch(correlation_uuid=correlation_uuid,
-                                        store_id=store_id)
+    file_path = app.state.storage.fetch(correlation_uuid=correlation_uuid, store_id=store_id)
 
     if not file_path or not file_path.is_file():
-        raise HTTPException(status_code=404, detail=f'The requested element {correlation_uuid}/{store_id} does '
-                                                    'not exist!')
+        raise HTTPException(
+            status_code=404, detail=f'The requested element {correlation_uuid}/{store_id} does ' 'not exist!'
+        )
     return FileResponse(path=file_path)
 
 
-@metadata.get(path='/concerns',
-              summary='Retrieve a list of concerns.',
-              description='Concerns are tag-like descriptions of plugin topics.')
+@metadata.get(
+    path='/concerns',
+    summary='Retrieve a list of concerns.',
+    description='Concerns are tag-like descriptions of plugin topics.',
+)
 def get_concerns() -> Concerns:
     return Concerns({c.value for c in Concern})
 
@@ -257,9 +268,11 @@ if __name__ == '__main__':
         logging.config.dictConfig(yaml.safe_load(file))
     log.info('Starting API-gateway')
 
-    uvicorn.run(app,
-                host='0.0.0.0',
-                port=int(os.getenv('API_GATEWAY_API_PORT', 8000)),
-                root_path=os.getenv('ROOT_PATH', '/'),
-                log_config=log_config,
-                log_level=log_level.lower())
+    uvicorn.run(
+        app,
+        host='0.0.0.0',
+        port=int(os.getenv('API_GATEWAY_API_PORT', 8000)),
+        root_path=os.getenv('ROOT_PATH', '/'),
+        log_config=log_config,
+        log_level=log_level.lower(),
+    )
