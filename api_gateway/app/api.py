@@ -18,7 +18,7 @@ from climatoology.base.artifact import _Artifact
 from climatoology.base.event import ComputeCommandStatus, ComputeCommandResult
 from climatoology.base.operator import Info, Concern
 from climatoology.broker.message_broker import AsyncRabbitMQ, RabbitMQManagementAPI
-from climatoology.store.object_store import MinioStorage
+from climatoology.store.object_store import MinioStorage, COMPUTATION_INFO_FILENAME
 from climatoology.utility.exception import InfoNotReceivedException, ClimatoologyVersionMismatchException
 from fastapi import APIRouter, FastAPI, WebSocket, HTTPException
 from fastapi.responses import FileResponse
@@ -233,6 +233,18 @@ def list_artifacts(correlation_uuid: UUID) -> List[_Artifact]:
 
 
 @store.get(
+    path='/{correlation_uuid}/metadata/',
+    summary='Get the metadata for a computation.',
+    description='The metadata lists a summary of the input parameters and additional info about the computation.',
+)
+def fetch_metadata(correlation_uuid: UUID) -> FileResponse:
+    try:
+        return fetch_artifact(correlation_uuid, COMPUTATION_INFO_FILENAME)
+    except HTTPException:
+        raise HTTPException(status_code=404, detail=f'The requested run {correlation_uuid} does not have metadata.')
+
+
+@store.get(
     path='/{correlation_uuid}/{store_id}',
     summary='Download a specific file.',
     description='The store_id can be parsed from the listing endpoint.',
@@ -242,7 +254,7 @@ def fetch_artifact(correlation_uuid: UUID, store_id: str) -> FileResponse:
 
     if not file_path or not file_path.is_file():
         raise HTTPException(
-            status_code=404, detail=f'The requested element {correlation_uuid}/{store_id} does ' 'not exist!'
+            status_code=404, detail=f'The requested element {correlation_uuid}/{store_id} does not exist!'
         )
     return FileResponse(path=file_path)
 
