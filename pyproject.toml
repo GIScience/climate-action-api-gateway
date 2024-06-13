@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "api-gateway"
-version = "1.0.0"
+version = "2.1.0"
 description = "The api gateway is the main contact point of the climate action architecture und separates the user realm from the backend."
 authors = ["Maciej Adamiak <maciej.adamiak@heigit.org>", "Moritz Schott <moritz.schott@heigit.org>"]
 readme = "README.md"
@@ -18,7 +18,6 @@ pyyaml = "^6.0.1"
 aio-pika = "^9.4.1"
 aiormq = "^6.8.0"
 pydantic = "^2.7.4"
-pydantic-settings = "^2.3.3"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.4.0"

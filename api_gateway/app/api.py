@@ -124,11 +124,13 @@ app = FastAPI(
     version=f'{str(api_gateway.__version__)}/{climatoology.__version__}',
     contact={
         'name': 'Climate Acton Team',
-        'url': 'https://heigit.org/',
-        'email': 'climate-action@heigit.org',
+        'url': 'https://heigit.org/climate-action',
+        'email': 'info@heigit.org',
     },
     openapi_tags=tags_metadata,
     lifespan=configure_dependencies,
+    docs_url=None if os.getenv('DISABLE_SWAGGER', 'False') in ('True', 'true') else '/docs',
+    redoc_url=None if os.getenv('DISABLE_SWAGGER', 'False') in ('True', 'true') else '/redoc',
 )
 
 
