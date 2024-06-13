@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import List, Tuple
 from uuid import UUID
 
+import climatoology
 import hydra
 import uvicorn
 import yaml
@@ -25,6 +26,8 @@ from fastapi.responses import FileResponse
 from hydra import compose
 from pydantic.dataclasses import dataclass
 from starlette.websockets import WebSocketDisconnect
+
+import api_gateway
 
 config_dir = os.getenv('API_GATEWAY_APP_CONFIG_DIR', str(Path('conf').absolute()))
 
@@ -118,7 +121,7 @@ app = FastAPI(
     title='Climate Action API Gateway',
     summary='Interact with the stateful Climate Action platform.',
     description=description,
-    version='1.0.0',
+    version=f'{str(api_gateway.__version__)}/{climatoology.__version__}',
     contact={
         'name': 'Climate Acton Team',
         'url': 'https://heigit.org/',
