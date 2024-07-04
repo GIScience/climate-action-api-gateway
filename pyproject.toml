@@ -12,7 +12,7 @@ starlette = "^0.37.2"
 websockets = "^12.0"
 uvicorn = { extras = ["standard"], version = "^0.30.1"}
 async-cache = "^1.1.1"
-climatoology = { git = "ssh://git@gitlab.gistools.geog.uni-heidelberg.de:2022/climate-action/climatoology.git", rev = "4.0.0" }
+climatoology = { git = "ssh://git@gitlab.gistools.geog.uni-heidelberg.de:2022/climate-action/climatoology.git", rev = "5.0.0" }
 semver = "^3.0.2"
 pyyaml = "^6.0.1"
 aio-pika = "^9.4.1"
