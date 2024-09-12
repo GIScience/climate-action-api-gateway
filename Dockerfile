@@ -8,7 +8,7 @@ COPY pyproject.toml poetry.lock ./
 
 RUN --mount=type=secret,id=CI_JOB_TOKEN \
     export CI_JOB_TOKEN=$(cat /run/secrets/CI_JOB_TOKEN) && \
-    git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.gistools.geog.uni-heidelberg.de".insteadOf "ssh://git@gitlab.gistools.geog.uni-heidelberg.de:2022" && \
+    git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.heigit.org".insteadOf "ssh://git@gitlab.heigit.org:2022" && \
     poetry install --no-ansi --no-interaction --all-extras --without dev --no-root
 
 COPY $PACKAGE_NAME $PACKAGE_NAME

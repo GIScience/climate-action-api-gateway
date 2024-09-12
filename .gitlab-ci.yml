@@ -12,7 +12,7 @@ unit_tests:
       - $PRE_COMMIT_HOME
       - .venv
   before_script:
-    - git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.gistools.geog.uni-heidelberg.de".insteadOf "ssh://git@gitlab.gistools.geog.uni-heidelberg.de:2022"
+    - git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.heigit.org".insteadOf "ssh://git@gitlab.heigit.org:2022"
     - python3 -m venv .venv
     - source .venv/bin/activate
     - pip install poetry==1.7.1
