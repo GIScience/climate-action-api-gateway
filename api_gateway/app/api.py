@@ -22,9 +22,9 @@ from climatoology.broker.message_broker import AsyncRabbitMQ, RabbitMQManagement
 from climatoology.store.object_store import MinioStorage, COMPUTATION_INFO_FILENAME
 from climatoology.utility.exception import InfoNotReceivedException, ClimatoologyVersionMismatchException
 from fastapi import APIRouter, FastAPI, WebSocket, HTTPException
-from fastapi.responses import FileResponse
 from hydra import compose
 from pydantic.dataclasses import dataclass
+from starlette.responses import RedirectResponse
 from starlette.websockets import WebSocketDisconnect
 
 import api_gateway
@@ -239,10 +239,10 @@ def list_artifacts(correlation_uuid: UUID) -> List[_Artifact]:
 
 @store.get(
     path='/{correlation_uuid}/metadata/',
-    summary='Get the metadata for a computation.',
+    summary='Get the pre-signed URL for the computation metadata JSON file.',
     description='The metadata lists a summary of the input parameters and additional info about the computation.',
 )
-def fetch_metadata(correlation_uuid: UUID) -> FileResponse:
+def fetch_metadata(correlation_uuid: UUID) -> RedirectResponse:
     try:
         return fetch_artifact(correlation_uuid, COMPUTATION_INFO_FILENAME)
     except HTTPException:
@@ -251,17 +251,17 @@ def fetch_metadata(correlation_uuid: UUID) -> FileResponse:
 
 @store.get(
     path='/{correlation_uuid}/{store_id}',
-    summary='Download a specific file.',
+    summary='Fetch a pre-signed URL pointing to the requested artifact.',
     description='The store_id can be parsed from the listing endpoint.',
 )
-def fetch_artifact(correlation_uuid: UUID, store_id: str) -> FileResponse:
-    file_path = app.state.storage.fetch(correlation_uuid=correlation_uuid, store_id=store_id)
+def fetch_artifact(correlation_uuid: UUID, store_id: str) -> RedirectResponse:
+    signed_url = app.state.storage.get_artifact_url(correlation_uuid=correlation_uuid, store_id=store_id)
 
-    if not file_path or not file_path.is_file():
+    if not signed_url:
         raise HTTPException(
             status_code=404, detail=f'The requested element {correlation_uuid}/{store_id} does not exist!'
         )
-    return FileResponse(path=file_path)
+    return RedirectResponse(url=signed_url)
 
 
 @metadata.get(

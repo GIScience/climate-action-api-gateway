@@ -7,9 +7,12 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 
 ## [Unreleased](https://gitlab.heigit.org/climate-action/api-gateway/-/compare/2.1.0...main)
 
+## [2.1.1](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.1.1) - 2024-09-17
+
 ### Changed
 
-- update climatoology to 5.0.0
+- `fetch`-endpoints now redirect to a pre-signed S3 url instead of providing a file response [#11](https://gitlab.heigit.org/climate-action/api-gateway/-/issues/11)
+- update climatoology to 5.2.0
 
 ### Fixed
 
