@@ -1,39 +1,44 @@
-import asyncio
 import logging.config
 import os
 import uuid
-from asyncio.exceptions import TimeoutError
 from contextlib import asynccontextmanager
+from dataclasses import dataclass
+from enum import StrEnum
 from pathlib import Path
-from typing import List, Tuple
+from typing import List
 from uuid import UUID
 
-import climatoology
-import hydra
+import geojson_pydantic
 import uvicorn
 import yaml
-from aio_pika import ExchangeType
-from aiormq import ChannelClosed, ChannelNotFoundEntity
 from cache import AsyncTTL
-from climatoology.base.artifact import _Artifact
-from climatoology.base.event import ComputeCommandStatus, ComputeCommandResult
-from climatoology.base.operator import Info, Concern
-from climatoology.broker.message_broker import AsyncRabbitMQ, RabbitMQManagementAPI
-from climatoology.store.object_store import MinioStorage, COMPUTATION_INFO_FILENAME
-from climatoology.utility.exception import InfoNotReceivedException, ClimatoologyVersionMismatchException
+from celery.result import AsyncResult
 from fastapi import APIRouter, FastAPI, WebSocket, HTTPException
-from hydra import compose
-from pydantic.dataclasses import dataclass
 from starlette.responses import RedirectResponse
-from starlette.websockets import WebSocketDisconnect
 
 import api_gateway
+import climatoology
+from climatoology.app.platform import CeleryPlatform
+from climatoology.base.artifact import _Artifact
+from climatoology.base.baseoperator import _Info, AoiProperties
+from climatoology.base.info import Concern
+from climatoology.store.object_store import COMPUTATION_INFO_FILENAME
+from climatoology.utility.exception import InfoNotReceivedException, ClimatoologyVersionMismatchException
 
 config_dir = os.getenv('API_GATEWAY_APP_CONFIG_DIR', str(Path('conf').absolute()))
 
 log_level = os.getenv('LOG_LEVEL', 'INFO')
 log_config = f'{config_dir}/logging/app/logging.yaml'
 log = logging.getLogger(__name__)
+
+
+class ComputationState(StrEnum):
+    PENDING = 'PENDING'
+    STARTED = 'STARTED'
+    SUCCESS = 'SUCCESS'
+    FAILURE = 'FAILURE'
+    RETRY = 'RETRY'
+    REVOKED = 'REVOKED'
 
 
 @dataclass
@@ -48,38 +53,9 @@ class Concerns:
 
 @asynccontextmanager
 async def configure_dependencies(app: FastAPI):
-    log.debug('configure dependencies')
-
-    hydra.initialize_config_dir(config_dir=config_dir, version_base=None)
-    cfg = compose(config_name='config')
-
-    app.state.storage = MinioStorage(
-        host=cfg.store.host,
-        port=int(cfg.store.port),
-        access_key=cfg.store.access_key,
-        secret_key=cfg.store.secret_key,
-        secure=cfg.store.secure == 'True',
-        bucket=cfg.store.bucket,
-        file_cache=Path(cfg.store.file_cache),
-    )
-    app.state.broker = AsyncRabbitMQ(
-        host=cfg.broker.host,
-        port=int(cfg.broker.port),
-        user=cfg.broker.user,
-        password=cfg.broker.password,
-        connection_pool_max_size=int(cfg.broker.connection_pool_max_size),
-        assert_plugin_version=cfg.broker.assert_plugin_version == 'True',
-    )
-
-    await app.state.broker.async_init()
-
-    app.state.broker_management_api = RabbitMQManagementAPI(
-        api_url=cfg.broker.api_url,
-        user=cfg.broker.user,
-        password=cfg.broker.password,
-    )
-
-    log.debug('dependencies configured')
+    log.debug('Configuring Platform connection')
+    app.state.platform = CeleryPlatform()
+    log.debug('Platform configured')
     yield
 
 
@@ -140,11 +116,15 @@ def is_ok() -> dict:
 
 
 @AsyncTTL(time_to_live=60, maxsize=1)
-async def list_plugins(plugin_names: Tuple) -> List[Info]:
+@plugin.get(path='/', summary='List all currently available plugins.')
+def list_plugins() -> List[_Info]:
+    plugin_names = list(app.state.platform.list_active_plugins())
+    plugin_names.sort()
+
     plugin_list = []
     for plugin_name in plugin_names:
         try:
-            plugin = await app.state.broker.request_info(plugin_name)
+            plugin = app.state.platform.request_info(plugin_name)
             plugin_list.append(plugin)
         except InfoNotReceivedException as e:
             log.warning(f'Plugin {plugin_name} has an open channel but could not be reached.', exc_info=e)
@@ -156,17 +136,10 @@ async def list_plugins(plugin_names: Tuple) -> List[Info]:
     return plugin_list
 
 
-@plugin.get(path='/', summary='List all currently available plugins.')
-async def plugins() -> List[Info]:
-    plugin_names = app.state.broker_management_api.get_active_plugins()
-    plugin_names.sort()
-    return await list_plugins(tuple(plugin_names))
-
-
 @plugin.get(path='/{plugin_id}', summary='Get information on a specific plugin or check its online status.')
-async def get_plugin(plugin_id: str) -> Info:
+def get_plugin(plugin_id: str) -> _Info:
     try:
-        return await app.state.broker.request_info(plugin_id=plugin_id)
+        return app.state.platform.request_info(plugin_id=plugin_id)
     except InfoNotReceivedException as e:
         raise HTTPException(status_code=404, detail=f'Plugin {plugin_id} does not exist.') from e
     except ClimatoologyVersionMismatchException as e:
@@ -181,50 +154,29 @@ async def get_plugin(plugin_id: str) -> Info:
     description='The parameters depend on the chosen plugin. '
     'Their input schema can be requested from the /plugin GET methods.',
 )
-async def plugin_compute(plugin_id: str, params: dict) -> CorrelationIdObject:
+def plugin_compute(
+    plugin_id: str, aoi: geojson_pydantic.Feature[geojson_pydantic.MultiPolygon, AoiProperties], params: dict
+) -> CorrelationIdObject:
     correlation_uuid = uuid.uuid4()
-    try:
-        await app.state.broker.send_compute(plugin_id, params, correlation_uuid)
-    except ChannelNotFoundEntity as e:
-        await app.state.broker.publish_status_update(
-            correlation_uuid=correlation_uuid, status=ComputeCommandStatus.FAILED
-        )
-        raise HTTPException(status_code=404, detail='The plugin is not online.') from e
-    await app.state.broker.publish_status_update(
-        correlation_uuid=correlation_uuid, status=ComputeCommandStatus.SCHEDULED
+    app.state.platform.send_compute_request(
+        plugin_id=plugin_id, aoi=aoi, params=params, correlation_uuid=correlation_uuid
     )
     return CorrelationIdObject(correlation_uuid)
 
 
 @computation.websocket(path='/')
 async def subscribe_compute_status(websocket: WebSocket, correlation_uuid: UUID = None) -> None:
-    async with app.state.broker.connection_pool.acquire() as connection:
-        channel = await connection.channel()
+    return HTTPException(status_code=501, detail='This endpoint will be fixed soon')
 
-    async def subscribe_callback(message):
-        status = ComputeCommandResult.model_validate_json(message.body.decode())
-        if not correlation_uuid or status.correlation_uuid == correlation_uuid:
-            await websocket.send_json(status.model_dump_json())
 
-    try:
-        await websocket.accept()
-
-        exchange = await channel.declare_exchange(app.state.broker.get_status_exchange(), ExchangeType.FANOUT)
-        queue = await channel.declare_queue(exclusive=True)
-        await queue.bind(exchange)
-        await queue.consume(subscribe_callback)
-        log.info(f'Websocket {queue.name} interaction has been started')
-
-        while True:
-            await asyncio.wait_for(websocket.receive_json(), timeout=10.0)
-
-    except (TimeoutError, WebSocketDisconnect):
-        log.info(f'Websocket {queue.name} interaction has been finished')
-    except ChannelClosed:
-        log.exception(f'Websocket {queue.name} interaction has been abruptly finished')
-    finally:
-        await queue.delete(if_unused=False, if_empty=False)
-        await channel.close()
+@computation.get(
+    path='/{correlation_uuid}/state',
+    summary='Get the state of the computation.',
+    description='Get the state of the computation. States are equal to the celery computation states described here: https://docs.celeryq.dev/en/stable/userguide/tasks.html#built-in-states',
+)
+def get_computation_status(correlation_uuid: UUID) -> ComputationState:
+    result = AsyncResult(id=str(correlation_uuid), app=app.state.platform.celery_app)
+    return result.state
 
 
 @store.get(
@@ -234,7 +186,7 @@ async def subscribe_compute_status(websocket: WebSocket, correlation_uuid: UUID 
     'To receive actual content you need to use the store uuid returned.',
 )
 def list_artifacts(correlation_uuid: UUID) -> List[_Artifact]:
-    return app.state.storage.list_all(correlation_uuid=correlation_uuid)
+    return app.state.platform.storage.list_all(correlation_uuid=correlation_uuid)
 
 
 @store.get(
@@ -255,7 +207,7 @@ def fetch_metadata(correlation_uuid: UUID) -> RedirectResponse:
     description='The store_id can be parsed from the listing endpoint.',
 )
 def fetch_artifact(correlation_uuid: UUID, store_id: str) -> RedirectResponse:
-    signed_url = app.state.storage.get_artifact_url(correlation_uuid=correlation_uuid, store_id=store_id)
+    signed_url = app.state.platform.storage.get_artifact_url(correlation_uuid=correlation_uuid, store_id=store_id)
 
     if not signed_url:
         raise HTTPException(

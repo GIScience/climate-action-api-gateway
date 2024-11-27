@@ -2,6 +2,6 @@
 **/.ruff_cache
 __pycache__/
 .idea/
-.env
+.env.base
 
 CI_JOB_TOKEN
