@@ -19,6 +19,7 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 ### Added
 
 - `state` endpoint for computations ([#12](https://gitlab.heigit.org/climate-action/api-gateway/-/issues/12))
+- `store/{plugin_id}/icon` endpoint to retrieve the icon file from the assets storage
 
 ## [2.1.1](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.1.1) - 2024-09-17
 

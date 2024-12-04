@@ -8,22 +8,22 @@ from pathlib import Path
 from typing import List
 from uuid import UUID
 
+import climatoology
 import geojson_pydantic
 import uvicorn
 import yaml
 from cache import AsyncTTL
 from celery.result import AsyncResult
-from fastapi import APIRouter, FastAPI, WebSocket, HTTPException
-from starlette.responses import RedirectResponse
-
-import api_gateway
-import climatoology
 from climatoology.app.platform import CeleryPlatform
 from climatoology.base.artifact import _Artifact
 from climatoology.base.baseoperator import _Info, AoiProperties
 from climatoology.base.info import Concern
 from climatoology.store.object_store import COMPUTATION_INFO_FILENAME
 from climatoology.utility.exception import InfoNotReceivedException, ClimatoologyVersionMismatchException
+from fastapi import APIRouter, FastAPI, WebSocket, HTTPException
+from starlette.responses import RedirectResponse
+
+import api_gateway
 
 config_dir = os.getenv('API_GATEWAY_APP_CONFIG_DIR', str(Path('conf').absolute()))
 
@@ -167,6 +167,22 @@ def plugin_compute(
 @computation.websocket(path='/')
 async def subscribe_compute_status(websocket: WebSocket, correlation_uuid: UUID = None) -> None:
     return HTTPException(status_code=501, detail='This endpoint will be fixed soon')
+
+
+@store.get(
+    path='/{plugin_id}/icon',
+    summary='Fetch the icon for a plugin.',
+    description='Icons are stable assets',
+)
+def fetch_icon(plugin_id: str, plugin_version: str) -> RedirectResponse:
+    signed_url = app.state.platform.storage.get_icon_url(plugin_id=plugin_id, plugin_version=plugin_version)
+
+    if not signed_url:
+        raise HTTPException(
+            status_code=404,
+            detail=f'The requested icon asset for plugin {plugin_id} version {plugin_version} does not exist!',
+        )
+    return RedirectResponse(url=signed_url)
 
 
 @computation.get(
