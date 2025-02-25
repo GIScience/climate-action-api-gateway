@@ -174,13 +174,13 @@ async def subscribe_compute_status(websocket: WebSocket, correlation_uuid: UUID 
     summary='Fetch the icon for a plugin.',
     description='Icons are stable assets',
 )
-def fetch_icon(plugin_id: str, plugin_version: str) -> RedirectResponse:
-    signed_url = app.state.platform.storage.get_icon_url(plugin_id=plugin_id, plugin_version=plugin_version)
+def fetch_icon(plugin_id: str) -> RedirectResponse:
+    signed_url = app.state.platform.storage.get_icon_url(plugin_id=plugin_id)
 
     if not signed_url:
         raise HTTPException(
             status_code=404,
-            detail=f'The requested icon asset for plugin {plugin_id} version {plugin_version} does not exist!',
+            detail=f'The requested icon asset for plugin {plugin_id} does not exist!',
         )
     return RedirectResponse(url=signed_url)
 
