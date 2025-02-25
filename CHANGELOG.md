@@ -7,6 +7,10 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 
 ## [Unreleased](https://gitlab.heigit.org/climate-action/api-gateway/-/compare/2.2.0...main)
 
+### Changed
+
+- Removed `plugin_version` from `get_icon_url()` which is no longer required (see [#155](https://gitlab.heigit.org/climate-action/climatoology/-/issues/155))
+
 ## [2.2.0](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.2.0)
 
 ### Deprecated
