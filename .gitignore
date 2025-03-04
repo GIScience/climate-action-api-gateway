@@ -5,3 +5,5 @@ __pycache__/
 .env.base
 
 CI_JOB_TOKEN
+
+playground.py

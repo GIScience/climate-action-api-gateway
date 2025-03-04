@@ -64,10 +64,10 @@ To run behind a proxy, you can configure the root path using the environment var
 
 #### Deploy
 
-Build the image as described above. To push a new version to [Docker Hub](https://hub.docker.com/orgs/heigit) run
+Build the image as described above. To push a new version to the [HeiGIT docker registry](https://repo.heigit.org) run
 
 ```shell
-docker image push repo.heigit.org/climat-action/api-gateway:devel
+docker image push repo.heigit.org/climate-action/api-gateway:devel
 ```
 
 ### Further Optional Parameters
