@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
-from typing import List
+from typing import List, Annotated
 from uuid import UUID
 
 import climatoology
@@ -20,7 +20,7 @@ from climatoology.base.baseoperator import _Info, AoiProperties
 from climatoology.base.info import Concern
 from climatoology.store.object_store import COMPUTATION_INFO_FILENAME
 from climatoology.utility.exception import InfoNotReceivedException, ClimatoologyVersionMismatchException
-from fastapi import APIRouter, FastAPI, WebSocket, HTTPException
+from fastapi import APIRouter, FastAPI, WebSocket, HTTPException, Body
 from starlette.responses import RedirectResponse
 
 import api_gateway
@@ -52,18 +52,18 @@ class Concerns:
 
 
 @asynccontextmanager
-async def configure_dependencies(app: FastAPI):
+async def configure_dependencies(the_app: FastAPI):
     log.debug('Configuring Platform connection')
-    app.state.platform = CeleryPlatform()
+    the_app.state.platform = CeleryPlatform()
     log.debug('Platform configured')
     yield
 
 
-health = APIRouter(prefix='/health')
-metadata = APIRouter(prefix='/metadata', tags=['metadata'])
-plugin = APIRouter(prefix='/plugin', tags=['plugin'])
-computation = APIRouter(prefix='/computation', tags=['computation'])
-store = APIRouter(prefix='/store', tags=['store'])
+health_route = APIRouter(prefix='/health')
+metadata_route = APIRouter(prefix='/metadata', tags=['metadata'])
+plugin_route = APIRouter(prefix='/plugin', tags=['plugin'])
+computation_route = APIRouter(prefix='/computation', tags=['computation'])
+store_route = APIRouter(prefix='/store', tags=['store'])
 
 tags_metadata = [
     {
@@ -110,13 +110,13 @@ app = FastAPI(
 )
 
 
-@health.get(path='/', status_code=200, summary='Hey, is this thing on?')
+@health_route.get(path='/', status_code=200, summary='Hey, is this thing on?')
 def is_ok() -> dict:
     return {'status': 'ok'}
 
 
 @AsyncTTL(time_to_live=60, maxsize=1)
-@plugin.get(path='/', summary='List all currently available plugins.')
+@plugin_route.get(path='/', summary='List all currently available plugins.')
 def list_plugins() -> List[_Info]:
     plugin_names = list(app.state.platform.list_active_plugins())
     plugin_names.sort()
@@ -136,7 +136,7 @@ def list_plugins() -> List[_Info]:
     return plugin_list
 
 
-@plugin.get(path='/{plugin_id}', summary='Get information on a specific plugin or check its online status.')
+@plugin_route.get(path='/{plugin_id}', summary='Get information on a specific plugin or check its online status.')
 def get_plugin(plugin_id: str) -> _Info:
     try:
         return app.state.platform.request_info(plugin_id=plugin_id)
@@ -148,14 +148,30 @@ def get_plugin(plugin_id: str) -> _Info:
         ) from e
 
 
-@plugin.post(
+@plugin_route.post(
     path='/{plugin_id}',
     summary='Schedule a computation task on a plugin.',
     description='The parameters depend on the chosen plugin. '
     'Their input schema can be requested from the /plugin GET methods.',
 )
 def plugin_compute(
-    plugin_id: str, aoi: geojson_pydantic.Feature[geojson_pydantic.MultiPolygon, AoiProperties], params: dict
+    plugin_id: str,
+    aoi: Annotated[
+        geojson_pydantic.Feature[geojson_pydantic.MultiPolygon, AoiProperties],
+        Body(
+            examples=[
+                {
+                    'type': 'Feature',
+                    'properties': {'name': 'name', 'id': 'id'},
+                    'geometry': {
+                        'coordinates': [[[[8.66, 49.42], [8.66, 49.41], [8.67, 49.41], [8.67, 49.42], [8.66, 49.42]]]],
+                        'type': 'MultiPolygon',
+                    },
+                }
+            ]
+        ),
+    ],
+    params: dict,
 ) -> CorrelationIdObject:
     correlation_uuid = uuid.uuid4()
     app.state.platform.send_compute_request(
@@ -164,12 +180,12 @@ def plugin_compute(
     return CorrelationIdObject(correlation_uuid)
 
 
-@computation.websocket(path='/')
+@computation_route.websocket(path='/')
 async def subscribe_compute_status(websocket: WebSocket, correlation_uuid: UUID = None) -> None:
     return HTTPException(status_code=501, detail='This endpoint will be fixed soon')
 
 
-@store.get(
+@store_route.get(
     path='/{plugin_id}/icon',
     summary='Fetch the icon for a plugin.',
     description='Icons are stable assets',
@@ -185,7 +201,7 @@ def fetch_icon(plugin_id: str) -> RedirectResponse:
     return RedirectResponse(url=signed_url)
 
 
-@computation.get(
+@computation_route.get(
     path='/{correlation_uuid}/state',
     summary='Get the state of the computation.',
     description='Get the state of the computation. States are equal to the celery computation states described here: https://docs.celeryq.dev/en/stable/userguide/tasks.html#built-in-states',
@@ -195,7 +211,7 @@ def get_computation_status(correlation_uuid: UUID) -> ComputationState:
     return result.state
 
 
-@store.get(
+@store_route.get(
     path='/{correlation_uuid}',
     summary='List all artifacts associated with a correlation uuid.',
     description='Note that this list may be emtpy if the computation has not been started or is not yet completed. '
@@ -205,7 +221,7 @@ def list_artifacts(correlation_uuid: UUID) -> List[_Artifact]:
     return app.state.platform.storage.list_all(correlation_uuid=correlation_uuid)
 
 
-@store.get(
+@store_route.get(
     path='/{correlation_uuid}/metadata/',
     summary='Get the pre-signed URL for the computation metadata JSON file.',
     description='The metadata lists a summary of the input parameters and additional info about the computation.',
@@ -217,7 +233,7 @@ def fetch_metadata(correlation_uuid: UUID) -> RedirectResponse:
         raise HTTPException(status_code=404, detail=f'The requested run {correlation_uuid} does not have metadata.')
 
 
-@store.get(
+@store_route.get(
     path='/{correlation_uuid}/{store_id}',
     summary='Fetch a pre-signed URL pointing to the requested artifact.',
     description='The store_id can be parsed from the listing endpoint.',
@@ -232,7 +248,7 @@ def fetch_artifact(correlation_uuid: UUID, store_id: str) -> RedirectResponse:
     return RedirectResponse(url=signed_url)
 
 
-@metadata.get(
+@metadata_route.get(
     path='/concerns',
     summary='Retrieve a list of concerns.',
     description='Concerns are tag-like descriptions of plugin topics.',
@@ -241,11 +257,11 @@ def get_concerns() -> Concerns:
     return Concerns({c.value for c in Concern})
 
 
-app.include_router(health)
-app.include_router(metadata)
-app.include_router(plugin)
-app.include_router(computation)
-app.include_router(store)
+app.include_router(health_route)
+app.include_router(metadata_route)
+app.include_router(plugin_route)
+app.include_router(computation_route)
+app.include_router(store_route)
 
 if __name__ == '__main__':
     logging.basicConfig(level=log_level.upper())

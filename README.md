@@ -54,8 +54,8 @@ in the [infrastructure repository](https://gitlab.heigit.org/climate-action/infr
 The tool is also [Dockerised](Dockerfile):
 
 ```shell
-DOCKER_BUILDKIT=1 docker build --secret id=CI_JOB_TOKEN . --tag heigit/ca-api-gateway:devel
-docker run --env-file .env.base --network=host heigit/ca-api-gateway:devel
+DOCKER_BUILDKIT=1 docker build --secret id=CI_JOB_TOKEN . --tag repo.heigit.org/climate-action/api-gateway:devel
+docker run --env-file .env.base --network=host repo.heigit.org/climate-action/api-gateway:devel
 ```
 
 and head to the link above.
