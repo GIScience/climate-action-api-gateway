@@ -1,26 +1,36 @@
 import logging.config
 import os
+import sys
 import uuid
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from enum import StrEnum
+from datetime import timedelta
 from pathlib import Path
-from typing import List, Annotated
+from typing import Annotated, Callable, List
 from uuid import UUID
 
 import climatoology
 import geojson_pydantic
 import uvicorn
 import yaml
-from cache import AsyncTTL
 from celery.result import AsyncResult
 from climatoology.app.platform import CeleryPlatform
 from climatoology.base.artifact import _Artifact
-from climatoology.base.baseoperator import _Info, AoiProperties
+from climatoology.base.baseoperator import AoiProperties, _Info
+from climatoology.base.event import ComputationState
 from climatoology.base.info import Concern
 from climatoology.store.object_store import COMPUTATION_INFO_FILENAME
-from climatoology.utility.exception import InfoNotReceivedException, ClimatoologyVersionMismatchException
-from fastapi import APIRouter, FastAPI, WebSocket, HTTPException, Body
+from climatoology.utility.exception import (
+    ClimatoologyUserError,
+    ClimatoologyVersionMismatchException,
+    InfoNotReceivedException,
+    InputValidationError,
+)
+from fastapi import APIRouter, Body, FastAPI, HTTPException, Request, WebSocket
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.inmemory import InMemoryBackend
+from fastapi_cache.decorator import cache
+from starlette.middleware.base import _StreamingResponse
 from starlette.responses import RedirectResponse
 
 import api_gateway
@@ -31,19 +41,18 @@ log_level = os.getenv('LOG_LEVEL', 'INFO')
 log_config = f'{config_dir}/logging/app/logging.yaml'
 log = logging.getLogger(__name__)
 
-
-class ComputationState(StrEnum):
-    PENDING = 'PENDING'
-    STARTED = 'STARTED'
-    SUCCESS = 'SUCCESS'
-    FAILURE = 'FAILURE'
-    RETRY = 'RETRY'
-    REVOKED = 'REVOKED'
+STORAGE_REDIRECT_TTL = 3600
 
 
 @dataclass
 class CorrelationIdObject:
     correlation_uuid: UUID
+
+
+@dataclass
+class ComputationStateInfo:
+    state: ComputationState
+    message: str = ''
 
 
 @dataclass
@@ -55,6 +64,7 @@ class Concerns:
 async def configure_dependencies(the_app: FastAPI):
     log.debug('Configuring Platform connection')
     the_app.state.platform = CeleryPlatform()
+    FastAPICache.init(InMemoryBackend())
     log.debug('Platform configured')
     yield
 
@@ -115,8 +125,8 @@ def is_ok() -> dict:
     return {'status': 'ok'}
 
 
-@AsyncTTL(time_to_live=60, maxsize=1)
 @plugin_route.get(path='/', summary='List all currently available plugins.')
+@cache(expire=60)
 def list_plugins() -> List[_Info]:
     plugin_names = list(app.state.platform.list_active_plugins())
     plugin_names.sort()
@@ -180,6 +190,31 @@ def plugin_compute(
     return CorrelationIdObject(correlation_uuid)
 
 
+@plugin_route.get(
+    path='/{plugin_id}/demo',
+    summary='Get the correlation id for the demo computation.',
+    description='Each plugin provides a demo computation that is precomputed and features a preview of the '
+    'functionality.',
+)
+@cache(expire=sys.maxsize)  # TODO: should be removed in favour of proper idempotency control soon!
+def plugin_demo(plugin_id: str) -> CorrelationIdObject:
+    correlation_uuid = uuid.uuid4()
+    info = get_plugin(plugin_id)
+
+    if not info.demo_config:
+        raise HTTPException(status_code=404, detail=f'Plugin {plugin_id} does not provide a demo.')
+
+    demo_aoi_properties = AoiProperties(name='Demo', id=f'{plugin_id}-demo')
+    aoi_feature = geojson_pydantic.Feature(
+        type='Feature', geometry=info.demo_config.aoi, properties=demo_aoi_properties
+    )
+
+    app.state.platform.send_compute_request(
+        plugin_id=plugin_id, aoi=aoi_feature, params=info.demo_config.params, correlation_uuid=correlation_uuid
+    )
+    return CorrelationIdObject(correlation_uuid)
+
+
 @computation_route.websocket(path='/')
 async def subscribe_compute_status(websocket: WebSocket, correlation_uuid: UUID = None) -> None:
     return HTTPException(status_code=501, detail='This endpoint will be fixed soon')
@@ -190,8 +225,11 @@ async def subscribe_compute_status(websocket: WebSocket, correlation_uuid: UUID 
     summary='Fetch the icon for a plugin.',
     description='Icons are stable assets',
 )
+@cache(expire=STORAGE_REDIRECT_TTL)
 def fetch_icon(plugin_id: str) -> RedirectResponse:
-    signed_url = app.state.platform.storage.get_icon_url(plugin_id=plugin_id)
+    signed_url = app.state.platform.storage.get_icon_url(
+        plugin_id=plugin_id, expires=timedelta(seconds=STORAGE_REDIRECT_TTL + 60)
+    )
 
     if not signed_url:
         raise HTTPException(
@@ -203,12 +241,16 @@ def fetch_icon(plugin_id: str) -> RedirectResponse:
 
 @computation_route.get(
     path='/{correlation_uuid}/state',
-    summary='Get the state of the computation.',
-    description='Get the state of the computation. States are equal to the celery computation states described here: https://docs.celeryq.dev/en/stable/userguide/tasks.html#built-in-states',
+    summary='Get the state of the computation with messages.',
+    description='Get the state of the computation with messages. States are equal to the celery computation states '
+    'described here: https://docs.celeryq.dev/en/stable/userguide/tasks.html#built-in-states',
 )
-def get_computation_status(correlation_uuid: UUID) -> ComputationState:
+def get_computation_status(correlation_uuid: UUID) -> ComputationStateInfo:
     result = AsyncResult(id=str(correlation_uuid), app=app.state.platform.celery_app)
-    return result.state
+    message = ''
+    if type(result.result) in (ClimatoologyUserError, InputValidationError):
+        message = str(result.result)
+    return ComputationStateInfo(state=result.state, message=message)
 
 
 @store_route.get(
@@ -226,9 +268,15 @@ def list_artifacts(correlation_uuid: UUID) -> List[_Artifact]:
     summary='Get the pre-signed URL for the computation metadata JSON file.',
     description='The metadata lists a summary of the input parameters and additional info about the computation.',
 )
+@cache(expire=STORAGE_REDIRECT_TTL)
 def fetch_metadata(correlation_uuid: UUID) -> RedirectResponse:
     try:
-        return fetch_artifact(correlation_uuid, COMPUTATION_INFO_FILENAME)
+        signed_url = app.state.platform.storage.get_artifact_url(
+            correlation_uuid=correlation_uuid,
+            store_id=COMPUTATION_INFO_FILENAME,
+            expires=timedelta(seconds=STORAGE_REDIRECT_TTL + 60),
+        )
+        return RedirectResponse(url=signed_url)
     except HTTPException:
         raise HTTPException(status_code=404, detail=f'The requested run {correlation_uuid} does not have metadata.')
 
@@ -238,8 +286,11 @@ def fetch_metadata(correlation_uuid: UUID) -> RedirectResponse:
     summary='Fetch a pre-signed URL pointing to the requested artifact.',
     description='The store_id can be parsed from the listing endpoint.',
 )
+@cache(expire=STORAGE_REDIRECT_TTL)
 def fetch_artifact(correlation_uuid: UUID, store_id: str) -> RedirectResponse:
-    signed_url = app.state.platform.storage.get_artifact_url(correlation_uuid=correlation_uuid, store_id=store_id)
+    signed_url = app.state.platform.storage.get_artifact_url(
+        correlation_uuid=correlation_uuid, store_id=store_id, expires=timedelta(seconds=STORAGE_REDIRECT_TTL + 60)
+    )
 
     if not signed_url:
         raise HTTPException(
@@ -262,6 +313,23 @@ app.include_router(metadata_route)
 app.include_router(plugin_route)
 app.include_router(computation_route)
 app.include_router(store_route)
+
+
+@app.middleware('http')
+async def remove_cache_control_header(request: Request, call_next: Callable) -> _StreamingResponse:
+    """Remove the 'Cache-Control' header from the responses so the browser doesn't also cache the responses.
+
+    By doing this, any cached results are cleared when this API is restarted. This allows us to force refresh the cache
+    by simply restarting this API. We may want to do this to force the indefinitely cached `'/{plugin_id}/demo'`
+    endpoint to be recreated (for example when we release updated plugins).
+
+    This is temporary until we do idempotency & caching
+    properly: https://gitlab.heigit.org/climate-action/climatoology/-/issues/110
+    """
+    response = await call_next(request)
+    response.headers.update({'Cache-Control': 'no-cache'})
+    return response
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=log_level.upper())
