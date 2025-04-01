@@ -225,7 +225,6 @@ async def subscribe_compute_status(websocket: WebSocket, correlation_uuid: UUID 
     summary='Fetch the icon for a plugin.',
     description='Icons are stable assets',
 )
-@cache(expire=STORAGE_REDIRECT_TTL)
 def fetch_icon(plugin_id: str) -> RedirectResponse:
     signed_url = app.state.platform.storage.get_icon_url(
         plugin_id=plugin_id, expires=timedelta(seconds=STORAGE_REDIRECT_TTL + 60)
@@ -268,7 +267,6 @@ def list_artifacts(correlation_uuid: UUID) -> List[_Artifact]:
     summary='Get the pre-signed URL for the computation metadata JSON file.',
     description='The metadata lists a summary of the input parameters and additional info about the computation.',
 )
-@cache(expire=STORAGE_REDIRECT_TTL)
 def fetch_metadata(correlation_uuid: UUID) -> RedirectResponse:
     try:
         signed_url = app.state.platform.storage.get_artifact_url(
@@ -286,7 +284,6 @@ def fetch_metadata(correlation_uuid: UUID) -> RedirectResponse:
     summary='Fetch a pre-signed URL pointing to the requested artifact.',
     description='The store_id can be parsed from the listing endpoint.',
 )
-@cache(expire=STORAGE_REDIRECT_TTL)
 def fetch_artifact(correlation_uuid: UUID, store_id: str) -> RedirectResponse:
     signed_url = app.state.platform.storage.get_artifact_url(
         correlation_uuid=correlation_uuid, store_id=store_id, expires=timedelta(seconds=STORAGE_REDIRECT_TTL + 60)
