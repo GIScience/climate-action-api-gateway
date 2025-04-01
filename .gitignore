@@ -2,6 +2,7 @@
 **/.ruff_cache
 __pycache__/
 .idea/
+.vscode/
 .env.base
 
 CI_JOB_TOKEN
