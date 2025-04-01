@@ -14,6 +14,7 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 - Response type from `/{correlation_uuid}/state` is now `ClimatoologyStateInfo`, which includes both the state and
 optionally (currently only for `ClimatoologyUserError` or `InputValidationError` results) a message (closes
 [#22](https://gitlab.heigit.org/climate-action/api-gateway/-/issues/22))
+- Restructured the repository to use multiple files separated by route
 
 ### Added
 
