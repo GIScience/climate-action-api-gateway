@@ -9,16 +9,19 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 
 ### Changed
 
-- Removed `plugin_version` from `get_icon_url()` which is no longer required (see [#155](https://gitlab.heigit.org/climate-action/climatoology/-/issues/155))
+- Removed `plugin_version` from `get_icon_url()` which is no longer required (
+  see [#155](https://gitlab.heigit.org/climate-action/climatoology/-/issues/155))
 - Replaced `ComputationState` with the `CommandComputeStatus` from `climatoology`
 - Response type from `/{correlation_uuid}/state` is now `ClimatoologyStateInfo`, which includes both the state and
-optionally (currently only for `ClimatoologyUserError` or `InputValidationError` results) a message (closes
-[#22](https://gitlab.heigit.org/climate-action/api-gateway/-/issues/22))
+  optionally (currently only for `ClimatoologyUserError` or `InputValidationError` results) a message (closes
+  [#22](https://gitlab.heigit.org/climate-action/api-gateway/-/issues/22))
 - Restructured the repository to use multiple files separated by route
 
 ### Added
 
 - `{plugin_id}/demo` endpoint to compute an indefinitely cached demo artifact
+- Basic test for all endpoints to be extended in the
+  future ([#15](https://gitlab.heigit.org/climate-action/api-gateway/-/issues/15))
 
 ## [2.2.0](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.2.0)
 
