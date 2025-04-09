@@ -17,10 +17,10 @@ unit_tests:
     - source .venv/bin/activate
     - pip install poetry==1.8.4
     - poetry config virtualenvs.in-project true
-    - poetry install --with dev --no-root
+    - poetry install --with dev,test
   script:
     - poetry run pre-commit run --all-files
-
+    - poetry run pytest
 
 docker_build_deploy_development:
   stage: deploy

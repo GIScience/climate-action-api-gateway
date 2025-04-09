@@ -4,7 +4,7 @@ from uuid import UUID
 from celery.result import AsyncResult
 from climatoology.base.event import ComputationState
 from climatoology.utility.exception import ClimatoologyUserError, InputValidationError
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, WebSocketException
 from starlette.requests import Request
 from starlette.websockets import WebSocket
 
@@ -17,9 +17,9 @@ class ComputationStateInfo:
     message: str = ''
 
 
-@router.websocket(path='/')
-async def subscribe_compute_status(websocket: WebSocket, correlation_uuid: UUID = None) -> None:
-    return HTTPException(status_code=501, detail='This endpoint will be fixed soon')
+@router.websocket(path='/{correlation_uuid}')
+async def subscribe_compute_status(websocket: WebSocket, correlation_uuid: UUID) -> None:
+    raise WebSocketException(code=1000, reason='Not Implemented')
 
 
 @router.get(
