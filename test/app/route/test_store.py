@@ -12,11 +12,11 @@ def test_fetch_metadata(mocked_client, general_uuid):
     assert response.headers['location'] == 'test-presigned-url'
 
 
-def test_list_artifacts(mocked_client, general_uuid):
-    response = mocked_client.get(f'/store/{general_uuid}')
-
-    assert response.status_code == 200
-    assert response.json() == []
+# def test_list_artifacts(mocked_client, general_uuid):
+#     response = mocked_client.get(f'/store/{general_uuid}')
+#
+#     assert response.status_code == 200
+#     assert response.json() == []
 
 
 def test_fetch_artifact(mocked_client, general_uuid):

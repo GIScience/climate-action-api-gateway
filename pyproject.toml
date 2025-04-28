@@ -14,7 +14,7 @@ starlette = "^0.41.3"
 websockets = "^14.1"
 uvicorn = { extras = ["standard"], version = "^0.32.1" }
 fastapi-cache2 = {extras = ["memcache"], version = "^0.2.2"}
-climatoology = { git = "ssh://git@gitlab.heigit.org:2022/climate-action/climatoology.git", tag = "6.2.0" }
+climatoology = { git = "ssh://git@gitlab.heigit.org:2022/climate-action/climatoology.git", tag="6.3.0" }
 semver = "^3.0.2"
 pydantic = "^2.10.2"
 pyyaml = "^6.0.2"
@@ -25,6 +25,7 @@ pre-commit = "^4.0.1"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8.3.5"
+pytest-postgresql = "^7.0.1"
 httpx = "^0.28.1"
 
 [build-system]
