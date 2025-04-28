@@ -1,3 +1,4 @@
+import os
 import uuid
 from pathlib import Path
 from typing import Generator, List
@@ -13,10 +14,12 @@ from climatoology.base.artifact import ArtifactModality, _Artifact
 from climatoology.base.baseoperator import AoiProperties, BaseOperator
 from climatoology.base.computation import ComputationResources
 from climatoology.base.info import Assets, Concern, PluginAuthor, _Info, generate_plugin_info
+from climatoology.store.database.database import BackendDatabase
 from climatoology.store.object_store import MinioStorage
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
 from pydantic import BaseModel, Field, HttpUrl
+from pytest_postgresql.janitor import DatabaseJanitor
 from semver import Version
 from starlette.testclient import TestClient
 
@@ -168,9 +171,12 @@ def default_operator(default_info, default_artifact) -> Generator[BaseOperator, 
 
 @pytest.fixture
 def default_plugin(
-    celery_app, celery_worker, default_operator, default_settings, mocked_object_store
+    celery_app, celery_worker, default_operator, default_settings, mocked_object_store, default_backend_db
 ) -> Generator[Celery, None, None]:
-    with patch('climatoology.app.plugin.Celery', return_value=celery_app):
+    with (
+        patch('climatoology.app.plugin.Celery', return_value=celery_app),
+        patch('climatoology.app.plugin.BackendDatabase', return_value=default_backend_db),
+    ):
         plugin = _create_plugin(operator=default_operator, settings=default_settings)
 
         celery_worker.reload()
@@ -179,7 +185,7 @@ def default_plugin(
 
 @pytest.fixture
 def default_platform_connection(
-    celery_app, mocked_object_store, set_basic_envs
+    celery_app, mocked_object_store, set_basic_envs, default_backend_db
 ) -> Generator[CeleryPlatform, None, None]:
     with (
         patch('climatoology.app.platform.CeleryPlatform.construct_celery_app', return_value=celery_app),
@@ -187,6 +193,7 @@ def default_platform_connection(
             'climatoology.app.platform.CeleryPlatform.construct_storage',
             return_value=mocked_object_store['minio_storage'],
         ),
+        patch('climatoology.app.platform.BackendDatabase', return_value=default_backend_db),
     ):
         yield CeleryPlatform()
 
@@ -219,3 +226,32 @@ def default_aoi() -> dict:
             ],
         },
     }
+
+
+@pytest.fixture
+def default_backend_db(request) -> BackendDatabase:
+    if os.getenv('CI', 'False').lower() == 'true':
+        pg_host = os.getenv('POSTGRES_HOST')
+        pg_port = os.getenv('POSTGRES_PORT')
+        pg_user = os.getenv('POSTGRES_USER')
+        pg_password = os.getenv('POSTGRES_PASSWORD')
+        pg_db = os.getenv('POSTGRES_DB')
+        pg_version = int(os.getenv('POSTGRES_VERSION'))
+
+        db_janitor = DatabaseJanitor(
+            host=pg_host,
+            port=pg_port,
+            user=pg_user,
+            password=pg_password,
+            dbname=pg_db,
+            version=Version(pg_version),
+        )
+        db_janitor.drop()
+        db_janitor.init()
+
+        connection_string = f'postgresql+psycopg2://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_db}'
+    else:
+        postgresql = request.getfixturevalue('postgresql')
+        connection_string = f'postgresql+psycopg2://{postgresql.info.user}:{postgresql.info.password}@{postgresql.info.host}:{postgresql.info.port}/{postgresql.info.dbname}'
+
+    return BackendDatabase(connection_string=connection_string)

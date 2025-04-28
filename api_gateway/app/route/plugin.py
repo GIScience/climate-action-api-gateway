@@ -8,7 +8,7 @@ from uuid import UUID
 import geojson_pydantic
 from climatoology.base.baseoperator import AoiProperties
 from climatoology.base.info import _Info
-from climatoology.utility.exception import ClimatoologyVersionMismatchException, InfoNotReceivedException
+from climatoology.utility.exception import VersionMismatchException, InfoNotReceivedException
 from fastapi import APIRouter, Body, HTTPException
 from fastapi_cache.decorator import cache
 from starlette.requests import Request
@@ -37,7 +37,7 @@ def list_plugins(request: Request) -> List[_Info]:
         except InfoNotReceivedException as e:
             log.warning(f'Plugin {plugin_name} has an open channel but could not be reached.', exc_info=e)
             continue
-        except ClimatoologyVersionMismatchException as e:
+        except VersionMismatchException as e:
             log.warning(f'Version mismatch for plugin {plugin_name}', exc_info=e)
             continue
 
@@ -50,7 +50,7 @@ def get_plugin(plugin_id: str, request: Request) -> _Info:
         return request.app.state.platform.request_info(plugin_id=plugin_id)
     except InfoNotReceivedException as e:
         raise HTTPException(status_code=404, detail=f'Plugin {plugin_id} does not exist.') from e
-    except ClimatoologyVersionMismatchException as e:
+    except VersionMismatchException as e:
         raise HTTPException(
             status_code=500, detail=f'Plugin {plugin_id} is not in a correct state (version mismatch).'
         ) from e
