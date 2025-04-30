@@ -16,13 +16,14 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
   optionally (currently only for `ClimatoologyUserError` or `InputValidationError` results) a message (closes
   [#22](https://gitlab.heigit.org/climate-action/api-gateway/-/issues/22))
 - Restructured the repository to use multiple files separated by route
-- Cache plugin info in `get_plugin` call
+- Cache plugin info in `get_plugin` call as it is no longer a live probe of the plugin
 
 ### Added
 
 - `{plugin_id}/demo` endpoint to compute an indefinitely cached demo artifact
 - Basic test for all endpoints to be extended in the
   future ([#15](https://gitlab.heigit.org/climate-action/api-gateway/-/issues/15))
+- a plugin status call `{plugin_id}/status` that allows a health check for plugins
 
 ## [2.2.0](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.2.0)
 
