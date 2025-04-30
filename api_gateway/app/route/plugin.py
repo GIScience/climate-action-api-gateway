@@ -25,27 +25,25 @@ class CorrelationIdObject:
 
 @router.get(path='/', summary='List all currently available plugins.')
 @cache(expire=60)
-def list_plugins(request: Request) -> List[_Info]:
-    plugin_names = list(request.app.state.platform.list_active_plugins())
-    plugin_names.sort()
+async def list_plugins(request: Request) -> List[_Info]:
+    plugin_ids = list(request.app.state.platform.list_active_plugins())
+    plugin_ids.sort()
 
     plugin_list = []
-    for plugin_name in plugin_names:
+    for plugin_id in plugin_ids:
         try:
-            plugin = request.app.state.platform.request_info(plugin_name)
-            plugin_list.append(plugin)
-        except InfoNotReceivedException as e:
-            log.warning(f'Plugin {plugin_name} has an open channel but could not be reached.', exc_info=e)
-            continue
-        except VersionMismatchException as e:
-            log.warning(f'Version mismatch for plugin {plugin_name}', exc_info=e)
+            plugin_info = await get_plugin(plugin_id=plugin_id, request=request)
+            plugin_list.append(plugin_info)
+        except HTTPException as e:
+            log.warning(f'Plugin {plugin_id} has an open channel but info could not be loaded.', exc_info=e)
             continue
 
     return plugin_list
 
 
 @router.get(path='/{plugin_id}', summary='Get information on a specific plugin or check its online status.')
-def get_plugin(plugin_id: str, request: Request) -> _Info:
+@cache(expire=60 * 60)
+async def get_plugin(plugin_id: str, request: Request) -> _Info:
     try:
         return request.app.state.platform.request_info(plugin_id=plugin_id)
     except InfoNotReceivedException as e:
@@ -96,9 +94,9 @@ def plugin_compute(
     'functionality.',
 )
 @cache(expire=sys.maxsize)  # TODO: should be removed in favour of proper idempotency control soon!
-def plugin_demo(plugin_id: str, request: Request) -> CorrelationIdObject:
+async def plugin_demo(plugin_id: str, request: Request) -> CorrelationIdObject:
     correlation_uuid = uuid.uuid4()
-    info = get_plugin(plugin_id, request)
+    info = await get_plugin(plugin_id, request)
 
     if not info.demo_config:
         raise HTTPException(status_code=404, detail=f'Plugin {plugin_id} does not provide a demo.')
