@@ -2,10 +2,12 @@ import logging
 import sys
 import uuid
 from dataclasses import dataclass
+from enum import StrEnum
 from typing import Annotated, List
 from uuid import UUID
 
 import geojson_pydantic
+from climatoology.app.plugin import generate_plugin_name
 from climatoology.base.baseoperator import AoiProperties
 from climatoology.base.info import _Info
 from climatoology.utility.exception import VersionMismatchException, InfoNotReceivedException
@@ -16,6 +18,16 @@ from starlette.requests import Request
 log = logging.getLogger(__name__)
 
 router = APIRouter(prefix='/plugin', tags=['plugin'])
+
+
+class PluginStatus(StrEnum):
+    ONLINE = 'online'
+    OFFLINE = 'offline'
+
+
+@dataclass
+class PluginStatusObject:
+    status: PluginStatus
 
 
 @dataclass
@@ -52,6 +64,20 @@ async def get_plugin(plugin_id: str, request: Request) -> _Info:
         raise HTTPException(
             status_code=500, detail=f'Plugin {plugin_id} is not in a correct state (version mismatch).'
         ) from e
+
+
+@router.get(path='/{plugin_id}/status', summary='Is this plugin online?')
+@cache(expire=60)
+def get_plugin_status(plugin_id: str, request: Request) -> PluginStatusObject:
+    plugin_name = generate_plugin_name(plugin_id=plugin_id)
+    try:
+        pong = request.app.state.platform.celery_app.control.inspect().ping(destination=[plugin_name])
+        pong = pong.get(plugin_name, {'ok': 'no'})
+        if pong['ok'] == 'pong':
+            return PluginStatusObject(status=PluginStatus.ONLINE)
+    except Exception:
+        pass
+    return PluginStatusObject(status=PluginStatus.OFFLINE)
 
 
 @router.post(
