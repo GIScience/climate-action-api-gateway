@@ -5,10 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project mostly adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://gitlab.heigit.org/climate-action/api-gateway/-/compare/2.2.0...main)
+## [Unreleased](https://gitlab.heigit.org/climate-action/api-gateway/-/compare/2.3.0...main)
+
+## [2.3.0](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.3.0) - 2025-05-09
 
 ### Changed
 
+- updated climatoology to version 6.4.0, which includes deduplicating computations
 - Removed `plugin_version` from `get_icon_url()` which is no longer required (
   see [#155](https://gitlab.heigit.org/climate-action/climatoology/-/issues/155))
 - Replaced `ComputationState` with the `CommandComputeStatus` from `climatoology`
