@@ -8,7 +8,6 @@ from fastapi import APIRouter, HTTPException
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
 
-
 router = APIRouter(prefix='/store', tags=['store'])
 
 STORAGE_REDIRECT_TTL = 3600
@@ -38,9 +37,11 @@ def fetch_icon(plugin_id: str, request: Request) -> RedirectResponse:
     description='The metadata lists a summary of the input parameters and additional info about the computation.',
 )
 def fetch_metadata(correlation_uuid: UUID, request: Request) -> RedirectResponse:
+    computation_uuid = request.app.state.platform.backend_db.resolve_computation_id(correlation_uuid)
+
     try:
         signed_url = request.app.state.platform.storage.get_artifact_url(
-            correlation_uuid=correlation_uuid,
+            correlation_uuid=computation_uuid,
             store_id=COMPUTATION_INFO_FILENAME,
             expires=timedelta(seconds=STORAGE_REDIRECT_TTL + 60),
         )
@@ -56,7 +57,8 @@ def fetch_metadata(correlation_uuid: UUID, request: Request) -> RedirectResponse
     'To receive actual content you need to use the store uuid returned.',
 )
 def list_artifacts(correlation_uuid: UUID, request: Request) -> List[_Artifact]:
-    return request.app.state.platform.storage.list_all(correlation_uuid=correlation_uuid)
+    computation_uuid = request.app.state.platform.backend_db.resolve_computation_id(correlation_uuid)
+    return request.app.state.platform.storage.list_all(correlation_uuid=computation_uuid)
 
 
 @router.get(
@@ -65,8 +67,9 @@ def list_artifacts(correlation_uuid: UUID, request: Request) -> List[_Artifact]:
     description='The store_id can be parsed from the listing endpoint.',
 )
 def fetch_artifact(correlation_uuid: UUID, store_id: str, request: Request) -> RedirectResponse:
+    computation_uuid = request.app.state.platform.backend_db.resolve_computation_id(correlation_uuid)
     signed_url = request.app.state.platform.storage.get_artifact_url(
-        correlation_uuid=correlation_uuid, store_id=store_id, expires=timedelta(seconds=STORAGE_REDIRECT_TTL + 60)
+        correlation_uuid=computation_uuid, store_id=store_id, expires=timedelta(seconds=STORAGE_REDIRECT_TTL + 60)
     )
 
     if not signed_url:
