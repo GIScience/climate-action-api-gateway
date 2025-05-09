@@ -21,6 +21,7 @@ from fastapi_cache.backends.inmemory import InMemoryBackend
 from pydantic import BaseModel, Field, HttpUrl
 from pytest_postgresql.janitor import DatabaseJanitor
 from semver import Version
+from sqlalchemy import create_engine, text
 from starlette.testclient import TestClient
 
 from api_gateway.app.api import app
@@ -254,4 +255,7 @@ def default_backend_db(request) -> BackendDatabase:
         postgresql = request.getfixturevalue('postgresql')
         connection_string = f'postgresql+psycopg2://{postgresql.info.user}:{postgresql.info.password}@{postgresql.info.host}:{postgresql.info.port}/{postgresql.info.dbname}'
 
-    return BackendDatabase(connection_string=connection_string)
+    with create_engine(connection_string).connect() as con:
+        con.execute(text('CREATE EXTENSION IF NOT EXISTS postgis;'))
+        con.commit()
+    return BackendDatabase(connection_string=connection_string, user_agent='Gateway Test Backend')

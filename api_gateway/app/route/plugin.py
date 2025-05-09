@@ -1,5 +1,4 @@
 import logging
-import sys
 import uuid
 from dataclasses import dataclass
 from enum import StrEnum
@@ -7,10 +6,11 @@ from typing import Annotated, List
 from uuid import UUID
 
 import geojson_pydantic
+from climatoology.app.platform import CacheOverrides
 from climatoology.app.plugin import generate_plugin_name
 from climatoology.base.baseoperator import AoiProperties
 from climatoology.base.info import _Info
-from climatoology.utility.exception import VersionMismatchException, InfoNotReceivedException
+from climatoology.utility.exception import InfoNotReceivedException, VersionMismatchException
 from fastapi import APIRouter, Body, HTTPException
 from fastapi_cache.decorator import cache
 from starlette.requests import Request
@@ -119,7 +119,6 @@ def plugin_compute(
     description='Each plugin provides a demo computation that is precomputed and features a preview of the '
     'functionality.',
 )
-@cache(expire=sys.maxsize)  # TODO: should be removed in favour of proper idempotency control soon!
 async def plugin_demo(plugin_id: str, request: Request) -> CorrelationIdObject:
     correlation_uuid = uuid.uuid4()
     info = await get_plugin(plugin_id, request)
@@ -133,6 +132,10 @@ async def plugin_demo(plugin_id: str, request: Request) -> CorrelationIdObject:
     )
 
     request.app.state.platform.send_compute_request(
-        plugin_id=plugin_id, aoi=aoi_feature, params=info.demo_config.params, correlation_uuid=correlation_uuid
+        plugin_id=plugin_id,
+        aoi=aoi_feature,
+        params=info.demo_config.params,
+        correlation_uuid=correlation_uuid,
+        override_shelf_life=CacheOverrides.FOREVER,
     )
     return CorrelationIdObject(correlation_uuid)
