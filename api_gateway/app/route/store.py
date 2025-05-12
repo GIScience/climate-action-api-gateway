@@ -3,8 +3,9 @@ from typing import List
 from uuid import UUID
 
 from climatoology.base.artifact import _Artifact
-from climatoology.store.object_store import COMPUTATION_INFO_FILENAME
+from climatoology.store.object_store import ComputationInfo
 from fastapi import APIRouter, HTTPException
+from fastapi_cache.decorator import cache
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
 
@@ -33,21 +34,16 @@ def fetch_icon(plugin_id: str, request: Request) -> RedirectResponse:
 
 @router.get(
     path='/{correlation_uuid}/metadata',
-    summary='Get the pre-signed URL for the computation metadata JSON file.',
+    summary='Get the metadata for a requested computation.',
     description='The metadata lists a summary of the input parameters and additional info about the computation.',
 )
-def fetch_metadata(correlation_uuid: UUID, request: Request) -> RedirectResponse:
-    computation_uuid = request.app.state.platform.backend_db.resolve_computation_id(correlation_uuid)
-
-    try:
-        signed_url = request.app.state.platform.storage.get_artifact_url(
-            correlation_uuid=computation_uuid,
-            store_id=COMPUTATION_INFO_FILENAME,
-            expires=timedelta(seconds=STORAGE_REDIRECT_TTL + 60),
-        )
-        return RedirectResponse(url=signed_url)
-    except HTTPException:
-        raise HTTPException(status_code=404, detail=f'The requested run {correlation_uuid} does not have metadata.')
+@cache(expire=60)
+def fetch_metadata(correlation_uuid: UUID, request: Request) -> ComputationInfo:
+    computation_info = request.app.state.platform.backend_db.read_computation(correlation_uuid=correlation_uuid)
+    if computation_info:
+        return computation_info
+    else:
+        raise HTTPException(status_code=404, detail=f'The requested run {correlation_uuid} is unknown.')
 
 
 @router.get(

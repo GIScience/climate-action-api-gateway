@@ -10,6 +10,7 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 ### Changed
 
 - all endpoints now end uniformly WITHOUT /
+- return `ComputationInfo` from the `compuatation/medadata` endpoint instead of a redirect URL
 
 ## [2.3.0](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.3.0) - 2025-05-09
 

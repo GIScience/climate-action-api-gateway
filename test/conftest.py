@@ -1,5 +1,6 @@
 import os
 import uuid
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Generator, List
 from unittest.mock import patch
@@ -13,9 +14,10 @@ from climatoology.app.settings import CABaseSettings
 from climatoology.base.artifact import ArtifactModality, _Artifact
 from climatoology.base.baseoperator import AoiProperties, BaseOperator
 from climatoology.base.computation import ComputationResources
+from climatoology.base.event import ComputationState
 from climatoology.base.info import Assets, Concern, PluginAuthor, _Info, generate_plugin_info
 from climatoology.store.database.database import BackendDatabase
-from climatoology.store.object_store import MinioStorage
+from climatoology.store.object_store import MinioStorage, ComputationInfo, PluginBaseInfo
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
 from pydantic import BaseModel, Field, HttpUrl
@@ -112,6 +114,7 @@ def default_info() -> _Info:
         sources=Path(__file__).parent / 'resources/test.bib',
         demo_input_parameters=TestModel(id=1),
         demo_aoi=Path(__file__).parent / 'resources/test_aoi.geojson',
+        computation_shelf_life=timedelta(days=1),
     )
     return info
 
@@ -259,3 +262,20 @@ def default_backend_db(request) -> BackendDatabase:
         con.execute(text('CREATE EXTENSION IF NOT EXISTS postgis;'))
         con.commit()
     return BackendDatabase(connection_string=connection_string, user_agent='Gateway Test Backend')
+
+
+@pytest.fixture
+def default_computation_info(general_uuid, default_aoi, default_artifact, default_info) -> ComputationInfo:
+    return ComputationInfo(
+        correlation_uuid=general_uuid,
+        timestamp=datetime(2018, 1, 1, 12),
+        deduplication_key=uuid.UUID('397e25df-3445-42a1-7e49-03466b3be5ca'),
+        cache_epoch=17532,
+        valid_until=datetime(2018, 1, 2),
+        params={'id': 1, 'name': 'John Doe'},
+        requested_params={'id': 1},
+        aoi=default_aoi,
+        artifacts=[default_artifact],
+        plugin_info=PluginBaseInfo(plugin_id=default_info.plugin_id, plugin_version=default_info.version),
+        status=ComputationState.SUCCESS,
+    )
