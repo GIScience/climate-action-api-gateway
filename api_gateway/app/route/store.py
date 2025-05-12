@@ -32,7 +32,7 @@ def fetch_icon(plugin_id: str, request: Request) -> RedirectResponse:
 
 
 @router.get(
-    path='/{correlation_uuid}/metadata/',
+    path='/{correlation_uuid}/metadata',
     summary='Get the pre-signed URL for the computation metadata JSON file.',
     description='The metadata lists a summary of the input parameters and additional info about the computation.',
 )
