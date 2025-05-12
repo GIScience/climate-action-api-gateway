@@ -7,6 +7,10 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 
 ## [Unreleased](https://gitlab.heigit.org/climate-action/api-gateway/-/compare/2.3.0...main)
 
+### Changed
+
+- all endpoints now end uniformly WITHOUT /
+
 ## [2.3.0](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.3.0) - 2025-05-09
 
 ### Changed

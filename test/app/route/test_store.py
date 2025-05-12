@@ -6,7 +6,7 @@ def test_fetch_icon(mocked_client):
 
 
 def test_fetch_metadata(mocked_client, general_uuid):
-    response = mocked_client.get(f'/store/{general_uuid}/metadata/', allow_redirects=False)
+    response = mocked_client.get(f'/store/{general_uuid}/metadata', allow_redirects=False)
 
     assert response.status_code == 307
     assert response.headers['location'] == 'test-presigned-url'

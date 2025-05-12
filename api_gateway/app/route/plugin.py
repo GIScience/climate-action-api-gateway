@@ -35,7 +35,7 @@ class CorrelationIdObject:
     correlation_uuid: UUID
 
 
-@router.get(path='/', summary='List all currently available plugins.')
+@router.get(path='', summary='List all currently available plugins.')
 @cache(expire=60)
 async def list_plugins(request: Request) -> List[_Info]:
     plugin_ids = list(request.app.state.platform.list_active_plugins())
