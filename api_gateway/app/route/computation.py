@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from uuid import UUID
 
+from celery.exceptions import TaskRevokedError, TimeLimitExceeded
 from celery.result import AsyncResult
 from climatoology.base.event import ComputationState
 from climatoology.utility.exception import ClimatoologyUserError, InputValidationError
@@ -35,6 +36,10 @@ def get_computation_status(correlation_uuid: UUID, request: Request) -> Computat
 
     result = AsyncResult(id=str(computation_uuid), app=request.app.state.platform.celery_app)
     message = ''
-    if type(result.result) in (ClimatoologyUserError, InputValidationError):
+    if isinstance(result.result, (ClimatoologyUserError, InputValidationError)):
         message = str(result.result)
+    elif isinstance(result.result, TimeLimitExceeded):
+        message = 'The requested computation is too big, try using a smaller area or revise the input parameters.'
+    elif isinstance(result.result, TaskRevokedError):
+        message = 'The task has been canceled due to high server load, please retry.'
     return ComputationStateInfo(state=result.state, message=message)

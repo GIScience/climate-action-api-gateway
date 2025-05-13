@@ -27,6 +27,7 @@ from sqlalchemy import create_engine, text
 from starlette.testclient import TestClient
 
 from api_gateway.app.api import app
+from api_gateway.app.settings import GatewaySettings
 
 pytest_plugins = ('celery.contrib.pytest',)
 
@@ -204,8 +205,9 @@ def default_platform_connection(
 
 @pytest.fixture
 def mocked_client(default_platform_connection) -> Generator[TestClient, None, None]:
-    FastAPICache.init(InMemoryBackend())
+    app.state.settings = GatewaySettings()
     app.state.platform = default_platform_connection
+    FastAPICache.init(InMemoryBackend())
     client = TestClient(app)
 
     yield client

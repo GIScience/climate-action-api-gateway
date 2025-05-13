@@ -1,12 +1,12 @@
 import logging.config
-import os
 from contextlib import asynccontextmanager
-from pathlib import Path
 from typing import Callable
 
 import climatoology
 import uvicorn
 import yaml
+
+from api_gateway.app.settings import GatewaySettings
 from climatoology.app.platform import CeleryPlatform
 from fastapi import FastAPI, Request
 from fastapi_cache import FastAPICache
@@ -16,10 +16,8 @@ from starlette.middleware.base import _StreamingResponse
 import api_gateway
 from api_gateway.app.route import computation, health, metadata, plugin, store
 
-config_dir = os.getenv('API_GATEWAY_APP_CONFIG_DIR', str(Path('conf').absolute()))
+settings = GatewaySettings()
 
-log_level = os.getenv('LOG_LEVEL', 'INFO')
-log_config = f'{config_dir}/logging/app/logging.yaml'
 log = logging.getLogger(__name__)
 
 
@@ -55,6 +53,7 @@ It servers as the single point of interaction.
 @asynccontextmanager
 async def configure_dependencies(the_app: FastAPI):
     log.debug('Configuring Platform connection')
+    the_app.state.settings = settings
     the_app.state.platform = CeleryPlatform()
     FastAPICache.init(InMemoryBackend())
     log.debug('Platform configured')
@@ -73,8 +72,8 @@ app = FastAPI(
     },
     openapi_tags=tags_metadata,
     lifespan=configure_dependencies,
-    docs_url=None if os.getenv('DISABLE_SWAGGER', 'False') in ('True', 'true') else '/docs',
-    redoc_url=None if os.getenv('DISABLE_SWAGGER', 'False') in ('True', 'true') else '/redoc',
+    docs_url=None if settings.disable_swagger else '/docs',
+    redoc_url=None if settings.disable_swagger else '/redoc',
 )
 
 
@@ -102,7 +101,8 @@ app.include_router(store.router)
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=log_level.upper())
+    log_config = settings.app_config_dir / 'logging/app/logging.yaml'
+    logging.basicConfig(level=settings.log_level.upper())
     with open(log_config) as file:
         logging.config.dictConfig(yaml.safe_load(file))
     log.info('Starting API-gateway')
@@ -110,8 +110,8 @@ if __name__ == '__main__':
     uvicorn.run(
         app,
         host='0.0.0.0',
-        port=int(os.getenv('API_GATEWAY_API_PORT', 8000)),
-        root_path=os.getenv('ROOT_PATH', '/'),
-        log_config=log_config,
-        log_level=log_level.lower(),
+        port=settings.port,
+        root_path=settings.root_path,
+        log_config=str(log_config),
+        log_level=settings.log_level.lower(),
     )
