@@ -52,8 +52,11 @@ def fetch_metadata(correlation_uuid: UUID, request: Request) -> ComputationInfo:
     description='Note that this list may be emtpy if the computation has not been started or is not yet completed. '
     'To receive actual content you need to use the store uuid returned.',
 )
+@cache(expire=60)
 def list_artifacts(correlation_uuid: UUID, request: Request) -> List[_Artifact]:
-    computation_uuid = request.app.state.platform.backend_db.resolve_computation_id(correlation_uuid)
+    computation_uuid = request.app.state.platform.backend_db.resolve_computation_id(
+        correlation_uuid
+    )  # TODO: read from the database
     return request.app.state.platform.storage.list_all(correlation_uuid=computation_uuid)
 
 
@@ -62,6 +65,7 @@ def list_artifacts(correlation_uuid: UUID, request: Request) -> List[_Artifact]:
     summary='Fetch a pre-signed URL pointing to the requested artifact.',
     description='The store_id can be parsed from the listing endpoint.',
 )
+# TODO: this should be cached but if we do so breaks the front-end where the 307 is cached as a 200
 def fetch_artifact(correlation_uuid: UUID, store_id: str, request: Request) -> RedirectResponse:
     computation_uuid = request.app.state.platform.backend_db.resolve_computation_id(correlation_uuid)
     signed_url = request.app.state.platform.storage.get_artifact_url(

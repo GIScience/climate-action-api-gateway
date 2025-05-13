@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project mostly adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://gitlab.heigit.org/climate-action/api-gateway/-/compare/2.3.0...main)
+## [Unreleased](https://gitlab.heigit.org/climate-action/api-gateway/-/compare/2.3.1...main)
+
+## [2.3.1](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.3.1) - 2025-05-13
 
 ### Changed
 
@@ -16,6 +18,7 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 ### Added
 
 - added `computation_queue_time` and `computation_time_limit` as optional gateway settings
+- caching to all endpoints that use any platform resource to prevent too many calls
 
 ## [2.3.0](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.3.0) - 2025-05-09
 

@@ -86,6 +86,7 @@ def get_plugin_status(plugin_id: str, request: Request) -> PluginStatusObject:
     description='The parameters depend on the chosen plugin. '
     'Their input schema can be requested from the /plugin GET methods.',
 )
+@cache(expire=3)
 def plugin_compute(
     plugin_id: str,
     aoi: Annotated[
@@ -124,6 +125,7 @@ def plugin_compute(
     description='Each plugin provides a demo computation that is precomputed and features a preview of the '
     'functionality.',
 )
+@cache(expire=3)
 async def plugin_demo(plugin_id: str, request: Request) -> CorrelationIdObject:
     correlation_uuid = uuid.uuid4()
     info = await get_plugin(plugin_id, request)

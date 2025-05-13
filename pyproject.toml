@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "api-gateway"
-version = "2.3.0"
+version = "2.3.1"
 description = "The api gateway is the main contact point of the climate action architecture und separates the user realm from the backend."
 authors = ["Maciej Adamiak <maciej.adamiak@heigit.org>",
     "Moritz Schott <moritz.schott@heigit.org>",
