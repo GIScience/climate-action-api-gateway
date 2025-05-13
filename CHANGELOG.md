@@ -11,6 +11,11 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 
 - all endpoints now end uniformly WITHOUT /
 - return `ComputationInfo` from the `compuatation/medadata` endpoint instead of a redirect URL
+- settings are now all grouped in settings.py under `GatewaySettings`
+
+### Added
+
+- added `computation_queue_time` and `computation_time_limit` as optional gateway settings
 
 ## [2.3.0](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.3.0) - 2025-05-09
 

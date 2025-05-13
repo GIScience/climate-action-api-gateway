@@ -108,7 +108,12 @@ def plugin_compute(
 ) -> CorrelationIdObject:
     correlation_uuid = uuid.uuid4()
     request.app.state.platform.send_compute_request(
-        plugin_id=plugin_id, aoi=aoi, params=params, correlation_uuid=correlation_uuid
+        plugin_id=plugin_id,
+        aoi=aoi,
+        params=params,
+        correlation_uuid=correlation_uuid,
+        task_time_limit=request.app.state.settings.computation_time_limit,
+        q_time=request.app.state.settings.computation_queue_time,
     )
     return CorrelationIdObject(correlation_uuid)
 
