@@ -1,6 +1,5 @@
 import logging.config
 from contextlib import asynccontextmanager
-from typing import Callable
 
 import climatoology
 import uvicorn
@@ -8,10 +7,9 @@ import yaml
 
 from api_gateway.app.settings import GatewaySettings
 from climatoology.app.platform import CeleryPlatform
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
-from starlette.middleware.base import _StreamingResponse
 
 import api_gateway
 from api_gateway.app.route import computation, health, metadata, plugin, store
@@ -75,22 +73,6 @@ app = FastAPI(
     docs_url=None if settings.disable_swagger else '/docs',
     redoc_url=None if settings.disable_swagger else '/redoc',
 )
-
-
-@app.middleware('http')
-async def remove_cache_control_header(request: Request, call_next: Callable) -> _StreamingResponse:
-    """Remove the 'Cache-Control' header from the responses so the browser doesn't also cache the responses.
-
-    By doing this, any cached results are cleared when this API is restarted. This allows us to force refresh the cache
-    by simply restarting this API. We may want to do this to force the indefinitely cached `'/{plugin_id}/demo'`
-    endpoint to be recreated (for example when we release updated plugins).
-
-    This is temporary until we do idempotency & caching
-    properly: https://gitlab.heigit.org/climate-action/climatoology/-/issues/110
-    """
-    response = await call_next(request)
-    response.headers.update({'Cache-Control': 'no-cache'})
-    return response
 
 
 app.include_router(health.router)
