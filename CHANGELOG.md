@@ -40,6 +40,7 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 - Basic test for all endpoints to be extended in the
   future ([#15](https://gitlab.heigit.org/climate-action/api-gateway/-/issues/15))
 - a plugin status call `{plugin_id}/status` that allows a health check for plugins
+- Coverage and linting to CI
 
 ## [2.2.0](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.2.0)
 

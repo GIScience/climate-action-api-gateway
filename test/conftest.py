@@ -17,7 +17,7 @@ from climatoology.base.computation import ComputationResources
 from climatoology.base.event import ComputationState
 from climatoology.base.info import Assets, Concern, PluginAuthor, _Info, generate_plugin_info
 from climatoology.store.database.database import BackendDatabase
-from climatoology.store.object_store import MinioStorage, ComputationInfo, PluginBaseInfo
+from climatoology.store.object_store import ComputationInfo, MinioStorage, PluginBaseInfo
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
 from pydantic import BaseModel, Field, HttpUrl

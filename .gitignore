@@ -4,6 +4,8 @@ __pycache__/
 .idea/
 .vscode/
 .env.base
+.coverage
+coverage.xml
 
 CI_JOB_TOKEN
 

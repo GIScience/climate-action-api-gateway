@@ -4,8 +4,6 @@ from contextlib import asynccontextmanager
 import climatoology
 import uvicorn
 import yaml
-
-from api_gateway.app.settings import GatewaySettings
 from climatoology.app.platform import CeleryPlatform
 from fastapi import FastAPI
 from fastapi_cache import FastAPICache
@@ -13,6 +11,7 @@ from fastapi_cache.backends.inmemory import InMemoryBackend
 
 import api_gateway
 from api_gateway.app.route import computation, health, metadata, plugin, store
+from api_gateway.app.settings import GatewaySettings
 
 settings = GatewaySettings()
 

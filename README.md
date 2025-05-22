@@ -49,6 +49,20 @@ Of course, you won't see much until you also launch a plugin that can answer you
 You can try the [plugin-blueprint](https://gitlab.heigit.org/climate-action/plugin-blueprint) or any other plugin listed
 in the [infrastructure repository](https://gitlab.heigit.org/climate-action/infrastructure).
 
+### Testing
+
+We use [pytest](https://pytest.org) as a testing engine.
+Ensure all tests are passing by running `poetry run pytest`.
+
+#### Coverage
+
+To get a coverage report of how much of your code is run during testing, execute
+`poetry run pytest --cov`.
+
+To get a more detailed report including which lines in each file are **not** tested,
+run `poetry run pytest --cov --cov-report term-missing`
+
+
 ### Docker
 
 The tool is also [Dockerised](Dockerfile):
