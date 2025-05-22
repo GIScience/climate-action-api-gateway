@@ -13,7 +13,7 @@ fastapi = "^0.115.5"
 starlette = "^0.41.3"
 websockets = "^14.1"
 uvicorn = { extras = ["standard"], version = "^0.32.1" }
-fastapi-cache2 = {extras = ["memcache"], version = "^0.2.2"}
+fastapi-cache2 = { extras = ["memcache"], version = "^0.2.2" }
 climatoology = { git = "ssh://git@gitlab.heigit.org:2022/climate-action/climatoology.git", tag="6.4.1"}
 semver = "^3.0.2"
 pydantic = "^2.10.2"
@@ -27,7 +27,34 @@ pre-commit = "^4.0.1"
 [tool.poetry.group.test.dependencies]
 pytest = "^8.3.5"
 pytest-postgresql = "^7.0.1"
+pytest-cov = "^6.0.0"
 httpx = "^0.28.1"
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.format]
+quote-style = "single"
+
+[tool.ruff.lint]
+# https://docs.astral.sh/ruff/rules
+select = [
+    # defaults
+    "F",
+    "E4", "E7", "E9",
+    # additional
+    "A", # be sure not to shadow built-in functions
+    "I", # isort to sort imports
+    "N", # check for use of PEP8 naming conventions
+
+    # docstring cleaning
+    "D201", "D207", "D208", "D209", "D210", "D214", "D215", "D300", "D403",
+    # auto-remove unused 'noqa' comments
+    "RUF100", "RUF101",
+]
+
+[tool.coverage.run]
+omit = ["test/*"]
 
 [build-system]
 requires = ["poetry-core"]
