@@ -7,6 +7,10 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 
 ## [Unreleased](https://gitlab.heigit.org/climate-action/api-gateway/-/compare/2.3.1...main)
 
+### Fixed
+
+- added a temporary hack to prevent computations taken from the Q by the broker from showing up as pending indefinitely
+
 ## [2.3.1](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.3.1) - 2025-05-13
 
 ### Changed
