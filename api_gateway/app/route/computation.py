@@ -36,9 +36,7 @@ async def subscribe_compute_status(websocket: WebSocket, correlation_uuid: UUID)
 )
 @cache(expire=2)
 def get_computation_status(correlation_uuid: UUID, request: Request) -> ComputationStateInfo:
-    computation_uuid = request.app.state.platform.backend_db.resolve_computation_id(
-        correlation_uuid
-    )  # TODO: add tests for all endpoints with correlation_uuid
+    computation_uuid = request.app.state.platform.backend_db.resolve_computation_id(correlation_uuid)
 
     result = AsyncResult(id=str(computation_uuid), app=request.app.state.platform.celery_app)
     task_result = result.result

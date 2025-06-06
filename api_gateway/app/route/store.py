@@ -54,9 +54,7 @@ def fetch_metadata(correlation_uuid: UUID, request: Request) -> ComputationInfo:
 )
 @cache(expire=60)
 def list_artifacts(correlation_uuid: UUID, request: Request) -> List[_Artifact]:
-    computation_uuid = request.app.state.platform.backend_db.resolve_computation_id(
-        correlation_uuid
-    )  # TODO: read from the database
+    computation_uuid = request.app.state.platform.backend_db.resolve_computation_id(correlation_uuid)
     return request.app.state.platform.storage.list_all(correlation_uuid=computation_uuid)
 
 
@@ -65,7 +63,8 @@ def list_artifacts(correlation_uuid: UUID, request: Request) -> List[_Artifact]:
     summary='Fetch a pre-signed URL pointing to the requested artifact.',
     description='The store_id can be parsed from the listing endpoint.',
 )
-# TODO: this should be cached but if we do so breaks the front-end where the 307 is cached as a 200
+# It would be nice if this was cached but if we do so breaks the front-end where the 307 is cached as a 200
+# https://gitlab.heigit.org/climate-action/api-gateway/-/issues/24
 def fetch_artifact(correlation_uuid: UUID, store_id: str, request: Request) -> RedirectResponse:
     computation_uuid = request.app.state.platform.backend_db.resolve_computation_id(correlation_uuid)
     signed_url = request.app.state.platform.storage.get_artifact_url(
