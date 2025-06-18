@@ -21,6 +21,7 @@ from climatoology.store.database.database import BackendDatabase
 from climatoology.store.object_store import ComputationInfo, MinioStorage, PluginBaseInfo
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
+from kombu import Exchange, Queue
 from freezegun import freeze_time
 from kombu import Exchange, Queue
 from pydantic import BaseModel, Field, HttpUrl
@@ -212,6 +213,15 @@ def default_operator(default_info, default_artifact) -> Generator[BaseOperator, 
             return [default_artifact]
 
     yield TestOperator()
+
+
+@pytest.fixture
+def celery_app(celery_app):
+    # Add queue to the base celery_app, so the platform also knows about it (because we aren't running rabbitmq for real)
+    compute_queue = Queue('test_plugin', Exchange('climatoology'), 'test_plugin')
+    celery_app.amqp.queues.select_add(compute_queue)
+
+    yield celery_app
 
 
 @pytest.fixture
