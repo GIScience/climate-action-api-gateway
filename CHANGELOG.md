@@ -12,6 +12,7 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 ### Changed
 
 - updated climatoology to 6.4.2 with new db schema
+- test the endpoints using a deduplicated correlation_uuid ([31](https://gitlab.heigit.org/climate-action/api-gateway/-/issues/31))
 
 ### Fixed
 

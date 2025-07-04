@@ -17,10 +17,8 @@ def test_computation_status_unknown(mocked_client, general_uuid):
     assert response.status_code == 404
 
 
-def test_computation_status_pending(mocked_client, general_uuid, default_aoi, default_plugin):
-    with patch('api_gateway.app.route.plugin.uuid.uuid4', return_value=general_uuid):
-        mocked_client.post('/plugin/test_plugin', json={'aoi': default_aoi, 'params': dict()})
-    response = mocked_client.get(f'/computation/{general_uuid}/state')
+def test_computation_status_pending(mocked_client, deduplicated_uuid, backend_with_computation):
+    response = mocked_client.get(f'/computation/{deduplicated_uuid}/state')
     assert response.status_code == 200
     assert response.json() == {'state': ComputationState.PENDING.value, 'message': ''}
 
@@ -28,7 +26,7 @@ def test_computation_status_pending(mocked_client, general_uuid, default_aoi, de
 def test_computation_status_revoked_q_time_exceeded(mocked_client, general_uuid, default_aoi, default_plugin):
     mocked_client.app.state.settings.computation_queue_time = 0.0
     with patch('api_gateway.app.route.plugin.uuid.uuid4', return_value=general_uuid):
-        mocked_client.post('/plugin/test_plugin', json={'aoi': default_aoi, 'params': dict()})
+        mocked_client.post('/plugin/test_plugin', json={'aoi': default_aoi, 'params': {'id': 1}})
     response = mocked_client.get(f'/computation/{general_uuid}/state')
 
     assert response.status_code == 200

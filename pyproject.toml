@@ -29,6 +29,7 @@ pytest = "^8.3.5"
 pytest-postgresql = "^7.0.1"
 pytest-cov = "^6.0.0"
 httpx = "^0.28.1"
+time-machine = "^2.16.0"
 
 [tool.ruff]
 line-length = 120
