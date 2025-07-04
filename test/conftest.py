@@ -1,6 +1,6 @@
 import os
 import uuid
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Generator, List
 from unittest.mock import patch
@@ -58,6 +58,11 @@ def general_uuid() -> uuid.UUID:
 
 
 @pytest.fixture
+def deduplicated_uuid() -> uuid.UUID:
+    return uuid.uuid4()
+
+
+@pytest.fixture
 def celery_config():
     return {'worker_direct': True}
 
@@ -65,6 +70,11 @@ def celery_config():
 @pytest.fixture(scope='session')
 def celery_worker_parameters():
     return {'hostname': 'test_plugin@_'}
+
+
+@pytest.fixture
+def stop_time(time_machine):
+    time_machine.move_to(datetime(2018, 1, 1, 12, tzinfo=UTC), tick=False)
 
 
 @pytest.fixture
@@ -267,6 +277,33 @@ def default_backend_db(request) -> BackendDatabase:
 
 
 @pytest.fixture
+def backend_with_computation(
+    default_backend_db, default_computation_info, default_info_final, deduplicated_uuid, set_basic_envs, stop_time
+) -> BackendDatabase:
+    default_backend_db.write_info(info=default_info_final)
+    default_backend_db.register_computation(
+        correlation_uuid=default_computation_info.correlation_uuid,
+        requested_params=default_computation_info.requested_params,
+        aoi=default_computation_info.aoi,
+        plugin_id=default_computation_info.plugin_info.plugin_id,
+        plugin_version=default_computation_info.plugin_info.plugin_version,
+        computation_shelf_life=default_info_final.computation_shelf_life,
+    )
+    default_backend_db.add_validated_params(
+        correlation_uuid=default_computation_info.correlation_uuid, params={'id': 1, 'name': 'John Doe'}
+    )
+    default_backend_db.register_computation(
+        correlation_uuid=deduplicated_uuid,
+        requested_params=default_computation_info.requested_params,
+        aoi=default_computation_info.aoi,
+        plugin_id=default_computation_info.plugin_info.plugin_id,
+        plugin_version=default_computation_info.plugin_info.plugin_version,
+        computation_shelf_life=default_info_final.computation_shelf_life,
+    )
+    return default_backend_db
+
+
+@pytest.fixture
 def default_computation_info(general_uuid, default_aoi, default_artifact, default_info) -> ComputationInfo:
     return ComputationInfo(
         correlation_uuid=general_uuid,
@@ -277,7 +314,7 @@ def default_computation_info(general_uuid, default_aoi, default_artifact, defaul
         params={'id': 1, 'name': 'John Doe'},
         requested_params={'id': 1},
         aoi=default_aoi,
-        artifacts=[default_artifact],
+        artifacts=[],
         plugin_info=PluginBaseInfo(plugin_id=default_info.plugin_id, plugin_version=default_info.version),
-        status=ComputationState.SUCCESS,
+        status=ComputationState.PENDING,
     )
