@@ -2,7 +2,7 @@ FROM python:3.11.5-bookworm
 
 ENV PACKAGE_NAME='api_gateway'
 
-RUN pip install --no-cache-dir poetry==1.7.1
+RUN pip install --no-cache-dir poetry==2.1.3
 
 COPY pyproject.toml poetry.lock ./
 

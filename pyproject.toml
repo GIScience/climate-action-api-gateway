@@ -11,8 +11,8 @@ readme = "README.md"
 python = "~3.11.5"
 fastapi = "^0.115.5"
 starlette = "^0.41.3"
-websockets = "^14.1"
-uvicorn = { extras = ["standard"], version = "^0.32.1" }
+websockets = "^15.0.1"
+uvicorn = {extras = ["standard"], version = "^0.35.0"}
 fastapi-cache2 = { extras = ["memcache"], version = "^0.2.2" }
 climatoology = { git = "ssh://git@gitlab.heigit.org:2022/climate-action/climatoology.git", tag="6.4.2"}
 semver = "^3.0.2"
