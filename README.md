@@ -65,10 +65,13 @@ run `poetry run pytest --cov --cov-report term-missing`
 
 ### Docker
 
-The tool is also [Dockerised](Dockerfile):
+The tool is also [Dockerised](Dockerfile).
+Images are automatically built and deployed in the [CI-pipeline](.gitlab-ci.yml).
+
+In case you want to manually build and run locally (e.g. to test a new feature in development), execute
 
 ```shell
-DOCKER_BUILDKIT=1 docker build --secret id=CI_JOB_TOKEN . --tag repo.heigit.org/climate-action/api-gateway:devel
+docker build --secret id=CI_JOB_TOKEN . --tag repo.heigit.org/climate-action/api-gateway:devel
 docker run --env-file .env.base --network=host repo.heigit.org/climate-action/api-gateway:devel
 ```
 
@@ -78,7 +81,8 @@ To run behind a proxy, you can configure the root path using the environment var
 
 #### Deploy
 
-Build the image as described above. To push a new version to the [HeiGIT docker registry](https://repo.heigit.org) run
+Build the image as described above.
+To push a new version to the [HeiGIT docker registry](https://repo.heigit.org) run
 
 ```shell
 docker image push repo.heigit.org/climate-action/api-gateway:devel
