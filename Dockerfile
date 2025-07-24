@@ -1,4 +1,4 @@
-FROM python:3.11.5-bookworm
+FROM python:3.13.5-bookworm
 
 ARG CI_JOB_TOKEN
 ENV PACKAGE_NAME='api_gateway'

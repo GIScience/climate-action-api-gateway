@@ -11,6 +11,7 @@ import pytest
 import shapely
 from celery import Celery
 from climatoology.app.plugin import _create_plugin
+from climatoology.app.sender import CelerySender
 from climatoology.app.settings import CABaseSettings
 from climatoology.base.artifact import ArtifactModality, _Artifact
 from climatoology.base.baseoperator import AoiProperties, BaseOperator
