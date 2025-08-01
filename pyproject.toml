@@ -14,7 +14,7 @@ starlette = "^0.41.3"
 websockets = "^15.0.1"
 uvicorn = {extras = ["standard"], version = "^0.35.0"}
 fastapi-cache2 = { extras = ["memcache"], version = "^0.2.2" }
-climatoology = { git = "ssh://git@gitlab.heigit.org:2022/climate-action/climatoology.git", tag="6.4.2"}
+climatoology = { git = "ssh://git@gitlab.heigit.org:2022/climate-action/climatoology.git", tag="6.4.3"}
 semver = "^3.0.2"
 pydantic = "^2.10.2"
 pydantic-settings = "^2.9.1"
