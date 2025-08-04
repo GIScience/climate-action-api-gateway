@@ -9,6 +9,7 @@ unit_tests:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == 'push'
+    - if: $CI_PIPELINE_SOURCE == "pipeline"
   image:
     name: python:3.13.5
   services:
@@ -93,8 +94,30 @@ optional_linting:
     exit_codes:
       - 1
 
-build_staging:
-  stage: build
+docker_build_deploy_canary:
+  stage: deploy
+  tags: [ k8s ]
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == 'push'
+    - if: $CI_PIPELINE_SOURCE == "pipeline"
+  image: docker.io/docker:cli
+  before_script:
+    - echo ${CI_DOCKER_TOKEN} | docker --config ~/ca_config login ${REGISTRY_URL} -u ${CI_DOCKER_USER} --password-stdin
+    - docker --config ~/ca_config buildx create --use --name=kube --driver remote tcp://amd64-buildkit-service.ci-cd.svc:1234
+  script:
+    - |
+      docker --config ~/ca_config \
+        buildx build \
+        --builder=kube \
+        --secret id=CI_JOB_TOKEN \
+        --cache-from=type=registry,ref=${REGISTRY_URL}/${GROUP_NAME}/${CI_PROJECT_NAME}:buildcache \
+        --cache-to=type=registry,ref=${REGISTRY_URL}/${GROUP_NAME}/${CI_PROJECT_NAME}:buildcache,mode=max \
+        --tag ${REGISTRY_URL}/${GROUP_NAME}/${CI_PROJECT_NAME}:canary \
+        --push \
+        .
+
+docker_build_deploy_development:
+  stage: deploy
   tags: [ k8s ]
   rules:
     - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"
