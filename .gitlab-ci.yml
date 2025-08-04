@@ -98,7 +98,7 @@ docker_build_deploy_canary:
   stage: deploy
   tags: [ k8s ]
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == 'push'
+    - if: $CI_COMMIT_BRANCH == "development" && $CI_PIPELINE_SOURCE == 'push'
     - if: $CI_PIPELINE_SOURCE == "pipeline"
   image: docker.io/docker:cli
   before_script:
