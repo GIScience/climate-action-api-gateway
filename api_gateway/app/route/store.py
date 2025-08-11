@@ -9,6 +9,7 @@ from fastapi_cache.decorator import cache
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
 
+from api_gateway.app.route.computation import _extract_computation_status
 from api_gateway.app.utils import cache_ttl
 
 router = APIRouter(prefix='/store', tags=['store'])
@@ -42,7 +43,9 @@ def fetch_icon(plugin_id: str, request: Request) -> RedirectResponse:
 @cache(expire=cache_ttl(60))
 def fetch_metadata(correlation_uuid: UUID, request: Request) -> ComputationInfo:
     computation_info = request.app.state.platform.backend_db.read_computation(correlation_uuid=correlation_uuid)
+
     if computation_info:
+        computation_info.status, _ = _extract_computation_status(correlation_uuid, request)
         return computation_info
     else:
         raise HTTPException(status_code=404, detail=f'The requested run {correlation_uuid} is unknown.')

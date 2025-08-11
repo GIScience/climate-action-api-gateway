@@ -35,9 +35,6 @@ def test_computation_status_revoked_q_time_exceeded(mocked_client, general_uuid,
         'message': 'The task has been canceled due to high server load, please retry.',
     }
 
-    db_info = mocked_client.app.state.platform.backend_db.read_computation(general_uuid)
-    assert db_info.status == ComputationState.REVOKED
-
 
 def test_computation_status_message_on_wrong_input(mocked_client, general_uuid, default_aoi_pure_dict, default_plugin):
     with patch('api_gateway.app.route.plugin.uuid.uuid4', return_value=general_uuid):

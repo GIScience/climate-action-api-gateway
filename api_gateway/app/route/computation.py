@@ -1,6 +1,7 @@
 import logging
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from typing import Any, Tuple
 from uuid import UUID
 
 from celery.exceptions import TaskRevokedError, TimeLimitExceeded
@@ -31,16 +32,8 @@ async def subscribe_compute_status(websocket: WebSocket, correlation_uuid: UUID)
     raise WebSocketException(code=1000, reason='Not Implemented')
 
 
-@router.get(
-    path='/{correlation_uuid}/state',
-    summary='Get the state of the computation with messages.',
-    description='Get the state of the computation with messages. States are equal to the celery computation states '
-    'described here: https://docs.celeryq.dev/en/stable/userguide/tasks.html#built-in-states',
-)
-@cache(expire=cache_ttl(2))
-def get_computation_status(correlation_uuid: UUID, request: Request) -> ComputationStateInfo:
+def _extract_computation_status(correlation_uuid: UUID, request: Request) -> Tuple[ComputationState, Exception | Any]:
     computation_uuid = request.app.state.platform.backend_db.resolve_computation_id(correlation_uuid)
-
     result = AsyncResult(id=str(computation_uuid), app=request.app.state.platform.celery_app)
     task_result = result.result
 
@@ -60,10 +53,21 @@ def get_computation_status(correlation_uuid: UUID, request: Request) -> Computat
                     correlation_uuid=computation_uuid,
                     failure_message='The task has been canceled due to high server load, please retry.',
                     cache=False,
-                    status=ComputationState.REVOKED,
                 )
                 state = ComputationState.REVOKED
                 task_result = TaskRevokedError()
+    return state, task_result
+
+
+@router.get(
+    path='/{correlation_uuid}/state',
+    summary='Get the state of the computation with messages.',
+    description='Get the state of the computation with messages. States are equal to the celery computation states '
+    'described here: https://docs.celeryq.dev/en/stable/userguide/tasks.html#built-in-states',
+)
+@cache(expire=cache_ttl(2))
+def get_computation_status(correlation_uuid: UUID, request: Request) -> ComputationStateInfo:
+    state, task_result = _extract_computation_status(correlation_uuid, request)
 
     message = ''
     if isinstance(task_result, (ClimatoologyUserError, InputValidationError)):
