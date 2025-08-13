@@ -1,6 +1,7 @@
 FROM python:3.13.5-bookworm
 
 ARG CI_JOB_TOKEN
+ARG CANARY=false
 ENV PACKAGE_NAME='api_gateway'
 
 RUN pip install --no-cache-dir poetry==2.1.3
@@ -16,6 +17,7 @@ COPY conf conf
 COPY README.md ./README.md
 
 RUN poetry install --no-ansi --no-interaction --all-extras --without dev
+RUN if [ "$CANARY" = true ] ; then poetry update climatoology; fi;
 
 SHELL ["/bin/bash", "-c"]
 ENTRYPOINT exec poetry run python ./${PACKAGE_NAME}/app/api.py
