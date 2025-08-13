@@ -1,24 +1,28 @@
-[tool.poetry]
+[project]
 name = "api-gateway"
 version = "2.3.2"
 description = "The api gateway is the main contact point of the climate action architecture und separates the user realm from the backend."
-authors = ["Maciej Adamiak <maciej.adamiak@heigit.org>",
-    "Moritz Schott <moritz.schott@heigit.org>",
-    "Danielle Gatland <danielle.gatland@heigit.org>"]
+authors = [
+    { name = "Maciej Adamiak", email = "maciej.adamiak@heigit.org" },
+    { name = "Moritz Schott", email = "moritz.schott@heigit.org" },
+    { name = "Danielle Gatland", email = "danielle.gatland@heigit.org" },
+]
 readme = "README.md"
+repository = "https://gitlab.heigit.org/climate-action/api-gateway"
 
-[tool.poetry.dependencies]
-python = "~3.11.5"
-fastapi = "^0.116.0"
-starlette = "^0.47.0"
-websockets = "^15.0.1"
-uvicorn = {extras = ["standard"], version = "^0.35.0"}
-fastapi-cache2 = { extras = ["memcache"], version = "^0.2.2" }
-climatoology = { git = "ssh://git@gitlab.heigit.org:2022/climate-action/climatoology.git", tag="6.4.3"}
-semver = "^3.0.2"
-pydantic = "^2.10.2"
-pydantic-settings = "^2.9.1"
-pyyaml = "^6.0.2"
+requires-python = ">=3.11.5,<3.12"
+dependencies = [
+    "fastapi (>=0.116.0,<0.117.0)",
+    "starlette (>=0.47.0,<0.48.0)",
+    "websockets (>=15.0.1,<16.0.0)",
+    "uvicorn[standard] (>=0.35.0,<0.36.0)",
+    "fastapi-cache2[memcache] (>=0.2.2,<0.3.0)",
+    "climatoology @ git+ssh://git@gitlab.heigit.org:2022/climate-action/climatoology.git@6.4.3",
+    "semver (>=3.0.2,<4.0.0)",
+    "pydantic (>=2.10.2,<3.0.0)",
+    "pydantic-settings (>=2.9.1,<3.0.0)",
+    "pyyaml (>=6.0.2,<7.0.0)",
+]
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^4.0.1"
@@ -47,7 +51,6 @@ select = [
     "A", # be sure not to shadow built-in functions
     "I", # isort to sort imports
     "N", # check for use of PEP8 naming conventions
-
     # docstring cleaning
     "D201", "D207", "D208", "D209", "D210", "D214", "D215", "D300", "D403",
     # auto-remove unused 'noqa' comments
@@ -58,5 +61,5 @@ select = [
 omit = ["test/*"]
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
