@@ -24,7 +24,6 @@ from climatoology.store.database.database import BackendDatabase
 from climatoology.store.object_store import ComputationInfo, MinioStorage, PluginBaseInfo
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
-from kombu import Exchange, Queue
 from freezegun import freeze_time
 from kombu import Exchange, Queue
 from pydantic import BaseModel, Field, HttpUrl
@@ -61,6 +60,13 @@ def set_basic_envs(monkeypatch):
     monkeypatch.setenv('postgres_database', 'test_database')
 
     monkeypatch.setenv('deduplicate_computations', 'true')
+
+
+@pytest.fixture
+def default_settings(set_basic_envs) -> CABaseSettings:
+    # the base settings are read from the env vars that are provided to this fixture
+    # noinspection PyArgumentList
+    return CABaseSettings()
 
 
 @pytest.fixture
@@ -159,7 +165,7 @@ def default_info() -> _Info:
 
 @pytest.fixture
 def default_info_final(default_info) -> _Info:
-    default_info_final = default_info.model_copy()
+    default_info_final = default_info.model_copy(deep=True)
     default_info_final.assets = Assets(icon='assets/test_plugin/latest/ICON.jpeg')
     default_info_final.operator_schema = {
         'properties': {
@@ -191,12 +197,19 @@ def default_info_final(default_info) -> _Info:
 def default_artifact(general_uuid) -> _Artifact:
     return _Artifact(
         name='test_name',
-        modality=ArtifactModality.MAP_LAYER_GEOJSON,
-        file_path=Path(__file__).parent / 'test_file.tiff',
+        modality=ArtifactModality.MARKDOWN,
+        file_path=Path(__file__).parent / 'resources/test_artifact_file.md',
         summary='Test summary',
         description='Test description',
         correlation_uuid=general_uuid,
-        store_id=f'{general_uuid}_test_file.tiff',
+        store_id=f'{general_uuid}_test_artifact_file.md',
+    )
+
+
+class TestModel(BaseModel):
+    id: int = Field(title='ID', description='A required integer parameter.', examples=[1])
+    name: str = Field(
+        title='Name', description='An optional name parameter.', examples=['John Doe'], default='John Doe'
     )
 
 
@@ -204,7 +217,7 @@ def default_artifact(general_uuid) -> _Artifact:
 def default_operator(default_info, default_artifact) -> Generator[BaseOperator, None, None]:
     class TestOperator(BaseOperator[TestModel]):
         def info(self) -> _Info:
-            return default_info.model_copy()
+            return default_info.model_copy(deep=True)
 
         def compute(
             self,
@@ -217,15 +230,6 @@ def default_operator(default_info, default_artifact) -> Generator[BaseOperator, 
             return [default_artifact]
 
     yield TestOperator()
-
-
-@pytest.fixture
-def celery_app(celery_app):
-    # Add queue to the base celery_app, so the platform also knows about it (because we aren't running rabbitmq for real)
-    compute_queue = Queue('test_plugin', Exchange('climatoology'), 'test_plugin')
-    celery_app.amqp.queues.select_add(compute_queue)
-
-    yield celery_app
 
 
 @pytest.fixture
@@ -267,6 +271,12 @@ def mocked_client(default_sender) -> Generator[TestClient, None, None]:
     yield client
 
 
+def default_aoi_feature_geojson_pydantic(
+    default_aoi_pure_dict,
+) -> geojson_pydantic.Feature[geojson_pydantic.MultiPolygon, AoiProperties]:
+    return geojson_pydantic.Feature[geojson_pydantic.MultiPolygon, AoiProperties](**default_aoi_pure_dict)
+
+
 @pytest.fixture
 def default_aoi_pure_dict() -> dict:
     return {
@@ -289,10 +299,47 @@ def default_aoi_pure_dict() -> dict:
 
 
 @pytest.fixture
-def default_aoi_feature_geojson_pydantic(
-    default_aoi_pure_dict,
-) -> geojson_pydantic.Feature[geojson_pydantic.MultiPolygon, AoiProperties]:
-    return geojson_pydantic.Feature[geojson_pydantic.MultiPolygon, AoiProperties](**default_aoi_pure_dict)
+def mocked_object_store() -> Generator[dict, None, None]:
+    with patch('climatoology.store.object_store.Minio') as minio_client:
+        minio_storage = MinioStorage(
+            host='minio.test.org',
+            port=9999,
+            access_key='key',
+            secret_key='secret',
+            secure=True,
+            bucket='test_bucket',
+        )
+        minio_client.return_value.presigned_get_object.return_value = 'test-presigned-url'
+        yield {'minio_storage': minio_storage, 'minio_client': minio_client}
+
+
+@pytest.fixture
+def default_sender(
+    celery_app, mocked_object_store, set_basic_envs, default_backend_db
+) -> Generator[CelerySender, None, None]:
+    with (
+        patch('climatoology.app.sender.Celery', return_value=celery_app),
+        patch(
+            'climatoology.app.sender.CelerySender.construct_storage',
+            return_value=mocked_object_store['minio_storage'],
+        ),
+        patch('climatoology.app.sender.BackendDatabase', return_value=default_backend_db),
+    ):
+        yield CelerySender()
+
+
+@pytest.fixture
+def celery_worker_parameters():
+    return {'hostname': 'test_plugin@hostname'}
+
+
+@pytest.fixture
+def celery_app(celery_app):
+    # Add queue to the base celery_app, so the platform also knows about it (because we aren't running rabbitmq for real)
+    compute_queue = Queue('test_plugin', Exchange('climatoology'), 'test_plugin')
+    celery_app.amqp.queues.select_add(compute_queue)
+
+    yield celery_app
 
 
 @pytest.fixture
@@ -359,7 +406,7 @@ def default_backend_db(db_with_tables) -> BackendDatabase:
 
 
 @pytest.fixture
-def backend_with_computation(
+def backend_with_computations(
     default_backend_db, default_computation_info, default_info_final, deduplicated_uuid, set_basic_envs, frozen_time
 ) -> BackendDatabase:
     default_backend_db.write_info(info=default_info_final)
@@ -412,5 +459,15 @@ def alembic_config() -> Config:
 
 
 @pytest.fixture
-def alembic_engine(db_connection_string, set_basic_envs):
-    return sqlalchemy.create_engine(db_connection_string)
+def alembic_engine(db_with_postgis, set_basic_envs):
+    return sqlalchemy.create_engine(db_with_postgis)
+
+
+@pytest.fixture
+def mocked_client(default_sender) -> Generator[TestClient, None, None]:
+    app.state.settings = GatewaySettings()
+    app.state.platform = default_sender
+    FastAPICache.init(InMemoryBackend())
+    client = TestClient(app)
+
+    yield client

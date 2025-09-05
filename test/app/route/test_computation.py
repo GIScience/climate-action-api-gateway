@@ -17,7 +17,7 @@ def test_computation_status_unknown(mocked_client, general_uuid):
     assert response.status_code == 404
 
 
-def test_computation_status_pending(mocked_client, deduplicated_uuid, backend_with_computation):
+def test_computation_status_pending(mocked_client, deduplicated_uuid, backend_with_computations):
     response = mocked_client.get(f'/computation/{deduplicated_uuid}/state')
     assert response.status_code == 200
     assert response.json() == {'state': ComputationState.PENDING.value, 'message': ''}

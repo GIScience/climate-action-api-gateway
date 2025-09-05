@@ -5,7 +5,7 @@ def test_fetch_icon(mocked_client):
     assert response.headers['location'] == 'test-presigned-url'
 
 
-def test_fetch_metadata(mocked_client, deduplicated_uuid, default_computation_info, backend_with_computation):
+def test_fetch_metadata(mocked_client, deduplicated_uuid, default_computation_info, backend_with_computations):
     response = mocked_client.get(f'/store/{deduplicated_uuid}/metadata')
 
     assert response.status_code == 200
