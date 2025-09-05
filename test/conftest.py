@@ -20,6 +20,7 @@ from climatoology.store.database.database import BackendDatabase
 from climatoology.store.object_store import ComputationInfo, MinioStorage, PluginBaseInfo
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
+from freezegun import freeze_time
 from pydantic import BaseModel, Field, HttpUrl
 from pytest_postgresql.janitor import DatabaseJanitor
 from semver import Version
@@ -73,8 +74,9 @@ def celery_worker_parameters():
 
 
 @pytest.fixture
-def stop_time(time_machine):
-    time_machine.move_to(datetime(2018, 1, 1, 12, tzinfo=UTC), tick=False)
+def frozen_time():
+    with freeze_time(datetime(2018, 1, 1, 12, tzinfo=UTC), ignore=['celery']) as frozen_time:
+        yield frozen_time
 
 
 @pytest.fixture
@@ -278,7 +280,7 @@ def default_backend_db(request) -> BackendDatabase:
 
 @pytest.fixture
 def backend_with_computation(
-    default_backend_db, default_computation_info, default_info_final, deduplicated_uuid, set_basic_envs, stop_time
+    default_backend_db, default_computation_info, default_info_final, deduplicated_uuid, set_basic_envs, frozen_time
 ) -> BackendDatabase:
     default_backend_db.write_info(info=default_info_final)
     default_backend_db.register_computation(

@@ -14,7 +14,6 @@ requires-python = ">=3.11.5,<3.12"
 dependencies = [
     "fastapi (>=0.116.0,<0.117.0)",
     "starlette (>=0.47.0,<0.48.0)",
-    "websockets (>=15.0.1,<16.0.0)",
     "uvicorn[standard] (>=0.35.0,<0.36.0)",
     "fastapi-cache2[memcache] (>=0.2.2,<0.3.0)",
     "climatoology @ git+ssh://git@gitlab.heigit.org:2022/climate-action/climatoology.git@6.4.3",
@@ -26,14 +25,14 @@ dependencies = [
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^4.0.1"
-
+celery-types = "^0.23.0"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8.3.5"
-pytest-postgresql = "^7.0.1"
 pytest-cov = "^6.0.0"
+pytest-postgresql = "^7.0.1"
 httpx = "^0.28.1"
-time-machine = "^2.16.0"
+freezegun = "^1.5.5"
 
 [tool.ruff]
 line-length = 120
