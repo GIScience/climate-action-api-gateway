@@ -17,4 +17,4 @@ class Concerns:
     description='Concerns are tag-like descriptions of plugin topics.',
 )
 def get_concerns() -> Concerns:
-    return Concerns({c.value for c in Concern})
+    return Concerns(items={c.value for c in Concern})

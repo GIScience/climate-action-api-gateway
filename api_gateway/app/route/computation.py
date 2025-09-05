@@ -25,6 +25,7 @@ class ComputationStateInfo:
 
 @router.websocket(path='/{correlation_uuid}')
 async def subscribe_compute_status(websocket: WebSocket, correlation_uuid: UUID) -> None:
+    log.debug(f'Received websocket request for {correlation_uuid} using websocket {websocket}')
     raise WebSocketException(code=1000, reason='Not Implemented')
 
 
