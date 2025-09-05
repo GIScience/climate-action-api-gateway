@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Generator, List
 from unittest.mock import patch
 
+import geojson_pydantic
 import pytest
 import shapely
 from celery import Celery
@@ -226,7 +227,7 @@ def mocked_client(default_platform_connection) -> Generator[TestClient, None, No
 
 
 @pytest.fixture
-def default_aoi() -> dict:
+def default_aoi_pure_dict() -> dict:
     return {
         'type': 'Feature',
         'properties': {'name': 'test_aoi', 'id': 'test_aoi_id'},
@@ -244,6 +245,13 @@ def default_aoi() -> dict:
             ],
         },
     }
+
+
+@pytest.fixture
+def default_aoi_feature_geojson_pydantic(
+    default_aoi_pure_dict,
+) -> geojson_pydantic.Feature[geojson_pydantic.MultiPolygon, AoiProperties]:
+    return geojson_pydantic.Feature[geojson_pydantic.MultiPolygon, AoiProperties](**default_aoi_pure_dict)
 
 
 @pytest.fixture
@@ -306,7 +314,9 @@ def backend_with_computation(
 
 
 @pytest.fixture
-def default_computation_info(general_uuid, default_aoi, default_artifact, default_info) -> ComputationInfo:
+def default_computation_info(
+    general_uuid, default_aoi_feature_geojson_pydantic, default_artifact, default_info
+) -> ComputationInfo:
     return ComputationInfo(
         correlation_uuid=general_uuid,
         timestamp=datetime(2018, 1, 1, 12),
@@ -315,7 +325,7 @@ def default_computation_info(general_uuid, default_aoi, default_artifact, defaul
         valid_until=datetime(2018, 1, 2),
         params={'id': 1, 'name': 'John Doe'},
         requested_params={'id': 1},
-        aoi=default_aoi,
+        aoi=default_aoi_feature_geojson_pydantic,
         artifacts=[],
         plugin_info=PluginBaseInfo(plugin_id=default_info.plugin_id, plugin_version=default_info.version),
         status=ComputationState.PENDING,

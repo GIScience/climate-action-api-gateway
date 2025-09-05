@@ -75,8 +75,8 @@ def get_plugin_status(plugin_id: str, request: Request) -> PluginStatusObject:
         pong = pong.get(plugin_name, {'ok': 'no'})
         if pong['ok'] == 'pong':
             return PluginStatusObject(status=PluginStatus.ONLINE)
-    except Exception:
-        pass
+    except Exception as e:
+        log.debug(f'Plugin {plugin_id} ping failed', exc_info=e)
     return PluginStatusObject(status=PluginStatus.OFFLINE)
 
 
