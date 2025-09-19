@@ -166,7 +166,7 @@ def default_info() -> _Info:
 @pytest.fixture
 def default_info_final(default_info) -> _Info:
     default_info_final = default_info.model_copy(deep=True)
-    default_info_final.assets = Assets(icon='assets/test_plugin/latest/ICON.jpeg')
+    default_info_final.assets = Assets(icon='assets/test_plugin/latest/ICON.png')
     default_info_final.operator_schema = {
         'properties': {
             'id': {'description': 'A required integer parameter.', 'examples': [1], 'title': 'ID', 'type': 'integer'},
