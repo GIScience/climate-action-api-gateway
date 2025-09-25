@@ -153,6 +153,7 @@ def default_info() -> _Info:
         icon=Path(__file__).parent / 'resources/test_icon.jpeg',
         version=Version.parse('3.1.0'),
         concerns={Concern.CLIMATE_ACTION__GHG_EMISSION},
+        teaser='This plugin does nothing and that is good.',
         purpose=Path(__file__).parent / 'resources/test_purpose.md',
         methodology=Path(__file__).parent / 'resources/test_methodology.md',
         sources=Path(__file__).parent / 'resources/test.bib',
