@@ -18,10 +18,10 @@ from climatoology.base.artifact import ArtifactModality, _Artifact
 from climatoology.base.baseoperator import AoiProperties, BaseOperator
 from climatoology.base.computation import ComputationResources
 from climatoology.base.event import ComputationState
-from climatoology.base.info import Assets, Concern, PluginAuthor, _Info, generate_plugin_info
+from climatoology.base.info import Assets, Concern, PluginAuthor, PluginBaseInfo, _Info, generate_plugin_info
 from climatoology.store.database import migration
 from climatoology.store.database.database import BackendDatabase
-from climatoology.store.object_store import ComputationInfo, MinioStorage, PluginBaseInfo
+from climatoology.store.object_store import ComputationInfo, MinioStorage
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
 from freezegun import freeze_time
@@ -384,7 +384,7 @@ def db_connection_string(db_connection_params) -> str:
         db_janitor.drop()
         db_janitor.init()
 
-    return f'postgresql://{user}:{password}@{host}:{port}/{dbname}'
+    return f'postgresql+psycopg://{user}:{password}@{host}:{port}/{dbname}'
 
 
 @pytest.fixture
@@ -415,8 +415,8 @@ def backend_with_computations(
         correlation_uuid=default_computation_info.correlation_uuid,
         requested_params=default_computation_info.requested_params,
         aoi=default_computation_info.aoi,
-        plugin_id=default_computation_info.plugin_info.plugin_id,
-        plugin_version=default_computation_info.plugin_info.plugin_version,
+        plugin_id=default_computation_info.plugin_info.id,
+        plugin_version=default_computation_info.plugin_info.version,
         computation_shelf_life=default_info_final.computation_shelf_life,
     )
     default_backend_db.add_validated_params(
@@ -428,8 +428,8 @@ def backend_with_computations(
         correlation_uuid=deduplicated_uuid,
         requested_params=default_computation_info.requested_params,
         aoi=default_computation_info.aoi,
-        plugin_id=default_computation_info.plugin_info.plugin_id,
-        plugin_version=default_computation_info.plugin_info.plugin_version,
+        plugin_id=default_computation_info.plugin_info.id,
+        plugin_version=default_computation_info.plugin_info.version,
         computation_shelf_life=default_info_final.computation_shelf_life,
     )
     return default_backend_db
