@@ -2,7 +2,14 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
+      # work around custom yaml syntax of !reference in gitlab ci
       - id: check-yaml
+        name: Check YAML (unsafe)
+        args: [ --unsafe ]
+        files: .gitlab-ci.yml
+      # check other yaml files normally
+      - id: check-yaml
+        exclude: .gitlab-ci.yml
       - id: check-added-large-files
       - id: detect-private-key
       - id: trailing-whitespace
