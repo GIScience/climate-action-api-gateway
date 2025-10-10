@@ -9,6 +9,8 @@ from fastapi_cache.decorator import cache
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
 
+from api_gateway.app.utils import cache_ttl
+
 router = APIRouter(prefix='/store', tags=['store'])
 
 STORAGE_REDIRECT_TTL = 3600
@@ -37,7 +39,7 @@ def fetch_icon(plugin_id: str, request: Request) -> RedirectResponse:
     summary='Get the metadata for a requested computation.',
     description='The metadata lists a summary of the input parameters and additional info about the computation.',
 )
-@cache(expire=60)
+@cache(expire=cache_ttl(60))
 def fetch_metadata(correlation_uuid: UUID, request: Request) -> ComputationInfo:
     computation_info = request.app.state.platform.backend_db.read_computation(correlation_uuid=correlation_uuid)
     if computation_info:
@@ -52,7 +54,7 @@ def fetch_metadata(correlation_uuid: UUID, request: Request) -> ComputationInfo:
     description='Note that this list may be emtpy if the computation has not been started or is not yet completed. '
     'To receive actual content you need to use the store uuid returned.',
 )
-@cache(expire=60)
+@cache(expire=cache_ttl(60))
 def list_artifacts(correlation_uuid: UUID, request: Request) -> List[_Artifact]:
     computation_uuid = request.app.state.platform.backend_db.resolve_computation_id(correlation_uuid)
     return request.app.state.platform.storage.list_all(correlation_uuid=computation_uuid)

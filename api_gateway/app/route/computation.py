@@ -12,6 +12,8 @@ from fastapi_cache.decorator import cache
 from starlette.requests import Request
 from starlette.websockets import WebSocket
 
+from api_gateway.app.utils import cache_ttl
+
 log = logging.getLogger(__name__)
 
 router = APIRouter(prefix='/computation', tags=['computation'])
@@ -35,7 +37,7 @@ async def subscribe_compute_status(websocket: WebSocket, correlation_uuid: UUID)
     description='Get the state of the computation with messages. States are equal to the celery computation states '
     'described here: https://docs.celeryq.dev/en/stable/userguide/tasks.html#built-in-states',
 )
-@cache(expire=2)
+@cache(expire=cache_ttl(2))
 def get_computation_status(correlation_uuid: UUID, request: Request) -> ComputationStateInfo:
     computation_uuid = request.app.state.platform.backend_db.resolve_computation_id(correlation_uuid)
 

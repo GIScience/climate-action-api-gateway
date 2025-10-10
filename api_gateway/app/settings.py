@@ -16,5 +16,6 @@ class GatewaySettings(BaseSettings):
     computation_time_limit: Optional[float] = None
 
     disable_swagger: bool = False
+    disable_caching: bool = False
 
     model_config = SettingsConfigDict(env_file='.env.gateway')

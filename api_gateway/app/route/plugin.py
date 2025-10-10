@@ -15,6 +15,8 @@ from fastapi import APIRouter, Body, HTTPException
 from fastapi_cache.decorator import cache
 from starlette.requests import Request
 
+from api_gateway.app.utils import cache_ttl
+
 log = logging.getLogger(__name__)
 
 router = APIRouter(prefix='/plugin', tags=['plugin'])
@@ -36,7 +38,7 @@ class CorrelationIdObject:
 
 
 @router.get(path='', summary='List all currently available plugins.')
-@cache(expire=60)
+@cache(expire=cache_ttl(60))
 async def list_plugins(request: Request) -> List[_Info]:
     plugin_ids = list(request.app.state.platform.list_active_plugins())
     plugin_ids.sort()
@@ -54,7 +56,7 @@ async def list_plugins(request: Request) -> List[_Info]:
 
 
 @router.get(path='/{plugin_id}', summary='Get information on a specific plugin or check its online status.')
-@cache(expire=60 * 60)
+@cache(expire=cache_ttl(60 * 60))
 async def get_plugin(plugin_id: str, request: Request) -> _Info:
     try:
         return request.app.state.platform.request_info(plugin_id=plugin_id)
@@ -67,7 +69,7 @@ async def get_plugin(plugin_id: str, request: Request) -> _Info:
 
 
 @router.get(path='/{plugin_id}/status', summary='Is this plugin online?')
-@cache(expire=60)
+@cache(expire=cache_ttl(60))
 def get_plugin_status(plugin_id: str, request: Request) -> PluginStatusObject:
     plugin_name = generate_plugin_name(plugin_id=plugin_id)
     try:
@@ -86,7 +88,7 @@ def get_plugin_status(plugin_id: str, request: Request) -> PluginStatusObject:
     description='The parameters depend on the chosen plugin. '
     'Their input schema can be requested from the /plugin GET methods.',
 )
-@cache(expire=3)
+@cache(expire=cache_ttl(3))
 def plugin_compute(
     plugin_id: str,
     aoi: Annotated[
@@ -125,7 +127,7 @@ def plugin_compute(
     description='Each plugin provides a demo computation that is precomputed and features a preview of the '
     'functionality.',
 )
-@cache(expire=3)
+@cache(expire=cache_ttl(3))
 async def plugin_demo(plugin_id: str, request: Request) -> CorrelationIdObject:
     correlation_uuid = uuid.uuid4()
     info = await get_plugin(plugin_id, request)
