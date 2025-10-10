@@ -18,6 +18,11 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 
 - added a temporary hack to prevent computations taken from the Q by the broker from showing up as pending indefinitely
 
+### Added
+
+- an env variable `DISABLE_CACHING` to optionally disable caching of all
+  endpoints ([#22](https://gitlab.heigit.org/climate-action/api-gateway/-/issues/22))
+
 ## [2.3.1](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.3.1) - 2025-05-13
 
 ### Changed
