@@ -9,18 +9,15 @@ import geojson_pydantic
 from celery import Celery
 from celery.result import AsyncResult
 from climatoology.app.plugin import extract_plugin_id, generate_plugin_name
-from climatoology.app.settings import CABaseSettings
+from climatoology.app.settings import EXCHANGE_NAME, CABaseSettings
 from climatoology.base.baseoperator import AoiProperties
 from climatoology.base.info import _Info
 from climatoology.store.database.database import BackendDatabase
 from climatoology.store.object_store import MinioStorage, Storage
-from climatoology.utility.exception import VersionMismatchException  # TODO: replace with VersionMismatchError
+from climatoology.utility.exception import VersionMismatchError
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from semver import Version
 
 log = logging.getLogger(__name__)
-
-EXCHANGE_NAME = 'C.dq2'  # TODO: replace with climatoology.app.settings.EXCHANGE_NAME
 
 
 class CacheOverrides(StrEnum):
@@ -54,7 +51,7 @@ class CelerySender:
         self.backend_db = BackendDatabase(
             connection_string=settings.db_connection_string,
             user_agent=f'CeleryPlatform/{climatoology.__version__}',
-            # assert_db_status=True,  # TODO: uncomment
+            assert_db_status=True,
         )
         self.deduplicate_computations = sender_config.deduplicate_computations
 
@@ -96,9 +93,8 @@ class CelerySender:
         log.debug(f"Requesting 'info' from {plugin_id}.")
         info_return = self.backend_db.read_info(plugin_id=plugin_id)
 
-        library_version = Version.parse(info_return.library_version)  # TODO: use info_return.library_version directly
-        if self.assert_plugin_version and not library_version.is_compatible(climatoology.__version__):
-            raise VersionMismatchException(
+        if self.assert_plugin_version and not info_return.library_version.is_compatible(climatoology.__version__):
+            raise VersionMismatchError(
                 f'Refusing to register plugin '
                 f'{info_return.name} in version {info_return.version} due to a climatoology library '
                 f'version mismatch. '

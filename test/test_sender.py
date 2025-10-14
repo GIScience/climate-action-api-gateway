@@ -15,7 +15,7 @@ from climatoology.store.object_store import ComputationInfo
 from climatoology.utility.exception import (
     ClimatoologyUserError,
     InputValidationError,
-    VersionMismatchException,
+    VersionMismatchError,
 )
 from semver import Version
 
@@ -52,7 +52,7 @@ def test_request_info(default_sender, default_info_final, default_plugin, celery
 
 @patch('climatoology.__version__', Version(1, 0, 0))
 def test_request_info_plugin_version_assert(default_sender, default_info, default_plugin, celery_worker):
-    with pytest.raises(VersionMismatchException, match='Refusing to register plugin.*'):
+    with pytest.raises(VersionMismatchError, match='Refusing to register plugin.*'):
         default_sender.request_info(plugin_id='test_plugin')
 
 
