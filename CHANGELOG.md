@@ -7,6 +7,15 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 
 ## [Unreleased](https://gitlab.heigit.org/climate-action/api-gateway/-/compare/2.3.2...main)
 
+### Added
+
+- `platform` functionality that was provided in `climatoology<=6.4.3` has been moved
+  here ([#184](https://gitlab.heigit.org/climate-action/climatoology/-/issues/184)).
+  The following elements have been moved and renamed:
+  - `climatoology.app.platform.CacheOverrides`: `api_gateway.sender.CacheOverrides`
+  - `climatoology.app.settings.SenderSettings`: `api_gateway.sender.SenderSettings`
+  - `climatoology.app.platform.CeleryPlatform`: `api_gateway.sender.CelerySender`
+
 ## [2.3.2](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.3.1) - 2025-06-04
 
 ### Changed

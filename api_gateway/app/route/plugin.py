@@ -6,7 +6,6 @@ from typing import Annotated, List
 from uuid import UUID
 
 import geojson_pydantic
-from climatoology.app.platform import CacheOverrides
 from climatoology.app.plugin import generate_plugin_name
 from climatoology.base.baseoperator import AoiProperties
 from climatoology.base.info import _Info
@@ -16,6 +15,7 @@ from fastapi_cache.decorator import cache
 from starlette.requests import Request
 
 from api_gateway.app.utils import cache_ttl
+from api_gateway.sender import CacheOverrides
 
 log = logging.getLogger(__name__)
 

@@ -1,4 +1,5 @@
 import os
+import time
 import uuid
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -9,7 +10,6 @@ import geojson_pydantic
 import pytest
 import shapely
 from celery import Celery
-from climatoology.app.platform import CeleryPlatform
 from climatoology.app.plugin import _create_plugin
 from climatoology.app.settings import CABaseSettings
 from climatoology.base.artifact import ArtifactModality, _Artifact
@@ -22,6 +22,7 @@ from climatoology.store.object_store import ComputationInfo, MinioStorage, Plugi
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
 from freezegun import freeze_time
+from kombu import Exchange, Queue
 from pydantic import BaseModel, Field, HttpUrl
 from pytest_postgresql.janitor import DatabaseJanitor
 from semver import Version
@@ -30,6 +31,7 @@ from starlette.testclient import TestClient
 
 from api_gateway.app.api import app
 from api_gateway.app.settings import GatewaySettings
+from api_gateway.sender import EXCHANGE_NAME, CelerySender
 
 pytest_plugins = ('celery.contrib.pytest',)
 
@@ -53,6 +55,8 @@ def set_basic_envs(monkeypatch):
     monkeypatch.setenv('postgres_password', 'test_password')
     monkeypatch.setenv('postgres_database', 'test_database')
 
+    monkeypatch.setenv('deduplicate_computations', 'true')
+
 
 @pytest.fixture
 def general_uuid() -> uuid.UUID:
@@ -72,6 +76,15 @@ def celery_config():
 @pytest.fixture(scope='session')
 def celery_worker_parameters():
     return {'hostname': 'test_plugin@_'}
+
+
+@pytest.fixture
+def celery_app(celery_app):
+    # Add queue to the base celery_app, so the platform also knows about it (because we aren't running rabbitmq for real)
+    compute_queue = Queue('test_plugin', Exchange(EXCHANGE_NAME), 'test_plugin')
+    celery_app.amqp.queues.select_add(compute_queue)
+
+    yield celery_app
 
 
 @pytest.fixture
@@ -106,6 +119,12 @@ class TestModel(BaseModel):
     id: int = Field(title='ID', description='A required integer parameter.', examples=[1])
     name: str = Field(
         title='Name', description='An optional name parameter.', examples=['John Doe'], default='John Doe'
+    )
+    execution_time: float = Field(
+        title='Execution time',
+        description='The time for the compute to run (in seconds)',
+        examples=[10.0],
+        default=0.0,
     )
 
 
@@ -147,6 +166,13 @@ def default_info_final(default_info) -> _Info:
                 'title': 'Name',
                 'type': 'string',
             },
+            'execution_time': {
+                'default': 0.0,
+                'description': 'The time for the compute to run (in seconds)',
+                'examples': [10.0],
+                'title': 'Execution time',
+                'type': 'number',
+            },
         },
         'required': ['id'],
         'title': 'TestModel',
@@ -182,6 +208,7 @@ def default_operator(default_info, default_artifact) -> Generator[BaseOperator, 
             aoi_properties: AoiProperties,
             params: TestModel,
         ) -> List[_Artifact]:
+            time.sleep(params.execution_time)
             return [default_artifact]
 
     yield TestOperator()
@@ -202,24 +229,24 @@ def default_plugin(
 
 
 @pytest.fixture
-def default_platform_connection(
+def default_sender(
     celery_app, mocked_object_store, set_basic_envs, default_backend_db
-) -> Generator[CeleryPlatform, None, None]:
+) -> Generator[CelerySender, None, None]:
     with (
-        patch('climatoology.app.platform.CeleryPlatform.construct_celery_app', return_value=celery_app),
+        patch('api_gateway.sender.CelerySender.construct_celery_app', return_value=celery_app),
         patch(
-            'climatoology.app.platform.CeleryPlatform.construct_storage',
+            'api_gateway.sender.CelerySender.construct_storage',
             return_value=mocked_object_store['minio_storage'],
         ),
-        patch('climatoology.app.platform.BackendDatabase', return_value=default_backend_db),
+        patch('api_gateway.sender.BackendDatabase', return_value=default_backend_db),
     ):
-        yield CeleryPlatform()
+        yield CelerySender()
 
 
 @pytest.fixture
-def mocked_client(default_platform_connection) -> Generator[TestClient, None, None]:
+def mocked_client(default_sender) -> Generator[TestClient, None, None]:
     app.state.settings = GatewaySettings()
-    app.state.platform = default_platform_connection
+    app.state.platform = default_sender
     FastAPICache.init(InMemoryBackend())
     client = TestClient(app)
 
@@ -300,8 +327,10 @@ def backend_with_computation(
         computation_shelf_life=default_info_final.computation_shelf_life,
     )
     default_backend_db.add_validated_params(
-        correlation_uuid=default_computation_info.correlation_uuid, params={'id': 1, 'name': 'John Doe'}
+        correlation_uuid=default_computation_info.correlation_uuid,
+        params={'id': 1, 'name': 'John Doe', 'execution_time': 0.0},
     )
+    default_backend_db.update_successful_computation(computation_info=default_computation_info)
     default_backend_db.register_computation(
         correlation_uuid=deduplicated_uuid,
         requested_params=default_computation_info.requested_params,
@@ -323,10 +352,10 @@ def default_computation_info(
         deduplication_key=uuid.UUID('397e25df-3445-42a1-7e49-03466b3be5ca'),
         cache_epoch=17532,
         valid_until=datetime(2018, 1, 2),
-        params={'id': 1, 'name': 'John Doe'},
+        params={'id': 1, 'name': 'John Doe', 'execution_time': 0.0},
         requested_params={'id': 1},
         aoi=default_aoi_feature_geojson_pydantic,
-        artifacts=[],
+        artifacts=[default_artifact],
         plugin_info=PluginBaseInfo(plugin_id=default_info.plugin_id, plugin_version=default_info.version),
-        status=ComputationState.PENDING,
+        status=ComputationState.SUCCESS,
     )
