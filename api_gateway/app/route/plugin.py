@@ -6,10 +6,9 @@ from typing import Annotated, List
 from uuid import UUID
 
 import geojson_pydantic
-from climatoology.app.plugin import generate_plugin_name
 from climatoology.base.baseoperator import AoiProperties
 from climatoology.base.info import _Info
-from climatoology.utility.exception import InfoNotReceivedException, VersionMismatchException
+from climatoology.utility.exception import InfoNotReceivedError, VersionMismatchError
 from fastapi import APIRouter, Body, HTTPException
 from fastapi_cache.decorator import cache
 from starlette.requests import Request
@@ -60,9 +59,9 @@ async def list_plugins(request: Request) -> List[_Info]:
 async def get_plugin(plugin_id: str, request: Request) -> _Info:
     try:
         return request.app.state.platform.request_info(plugin_id=plugin_id)
-    except InfoNotReceivedException as e:
+    except InfoNotReceivedError as e:
         raise HTTPException(status_code=404, detail=f'Plugin {plugin_id} does not exist.') from e
-    except VersionMismatchException as e:
+    except VersionMismatchError as e:
         raise HTTPException(
             status_code=500, detail=f'Plugin {plugin_id} is not in a correct state (version mismatch).'
         ) from e
@@ -71,11 +70,10 @@ async def get_plugin(plugin_id: str, request: Request) -> _Info:
 @router.get(path='/{plugin_id}/status', summary='Is this plugin online?')
 @cache(expire=cache_ttl(60))
 def get_plugin_status(plugin_id: str, request: Request) -> PluginStatusObject:
-    plugin_name = generate_plugin_name(plugin_id=plugin_id)
     try:
-        pong = request.app.state.platform.celery_app.control.inspect().ping(destination=[plugin_name])
-        pong = pong.get(plugin_name, {'ok': 'no'})
-        if pong['ok'] == 'pong':
+        pong = request.app.state.platform.celery_app.control.inspect().ping()
+        pong = [response for key, response in pong.items() if key.startswith(plugin_id)]
+        if pong and {'ok': 'pong'} in pong:
             return PluginStatusObject(status=PluginStatus.ONLINE)
     except Exception as e:
         log.debug(f'Plugin {plugin_id} ping failed', exc_info=e)
@@ -135,7 +133,7 @@ async def plugin_demo(plugin_id: str, request: Request) -> CorrelationIdObject:
     if not info.demo_config:
         raise HTTPException(status_code=404, detail=f'Plugin {plugin_id} does not provide a demo.')
 
-    demo_aoi_properties = AoiProperties(name='Demo', id=f'{plugin_id}-demo')
+    demo_aoi_properties = AoiProperties(name=info.demo_config.name, id=f'{plugin_id}-demo')
     aoi_feature = geojson_pydantic.Feature(
         type='Feature', geometry=info.demo_config.aoi, properties=demo_aoi_properties
     )
