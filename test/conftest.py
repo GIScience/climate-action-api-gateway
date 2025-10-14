@@ -205,6 +205,7 @@ def default_plugin(
         yield plugin
 
 
+@pytest.fixture
 def default_aoi_feature_geojson_pydantic(
     default_aoi_pure_dict,
 ) -> geojson_pydantic.Feature[geojson_pydantic.MultiPolygon, AoiProperties]:
@@ -261,7 +262,7 @@ def default_computation_info(
         requested_params={'id': 1},
         aoi=default_aoi_feature_geojson_pydantic,
         artifacts=[default_artifact],
-        plugin_info=PluginBaseInfo(plugin_id=default_info.plugin_id, plugin_version=default_info.version),
+        plugin_info=PluginBaseInfo(id=default_info.id, version=default_info.version),
         status=ComputationState.SUCCESS,
     )
 
