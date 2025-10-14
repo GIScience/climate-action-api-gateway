@@ -12,13 +12,20 @@ import shapely
 import sqlalchemy
 from celery import Celery
 from climatoology.app.plugin import _create_plugin
-from climatoology.app.sender import CelerySender
 from climatoology.app.settings import CABaseSettings
 from climatoology.base.artifact import ArtifactModality, _Artifact
 from climatoology.base.baseoperator import AoiProperties, BaseOperator
 from climatoology.base.computation import ComputationResources
 from climatoology.base.event import ComputationState
-from climatoology.base.info import Assets, Concern, PluginAuthor, PluginBaseInfo, _Info, generate_plugin_info
+from climatoology.base.info import (
+    Assets,
+    Concern,
+    PluginAuthor,
+    PluginBaseInfo,
+    _Info,
+    compose_demo_config,
+    generate_plugin_info,
+)
 from climatoology.store.database import migration
 from climatoology.store.database.database import BackendDatabase
 from climatoology.store.object_store import ComputationInfo, MinioStorage
@@ -80,63 +87,9 @@ def deduplicated_uuid() -> uuid.UUID:
 
 
 @pytest.fixture
-def celery_config():
-    return {'worker_direct': True}
-
-
-@pytest.fixture(scope='session')
-def celery_worker_parameters():
-    return {'hostname': 'test_plugin@_'}
-
-
-@pytest.fixture
-def celery_app(celery_app):
-    # Add queue to the base celery_app, so the platform also knows about it (because we aren't running rabbitmq for real)
-    compute_queue = Queue('test_plugin', Exchange(EXCHANGE_NAME), 'test_plugin')
-    celery_app.amqp.queues.select_add(compute_queue)
-
-    yield celery_app
-
-
-@pytest.fixture
 def frozen_time():
     with freeze_time(datetime(2018, 1, 1, 12, tzinfo=UTC), ignore=['celery']) as frozen_time:
         yield frozen_time
-
-
-@pytest.fixture
-def default_settings(set_basic_envs) -> CABaseSettings:
-    # the base settings are read from the env vars that are provided to this fixture
-    # noinspection PyArgumentList
-    return CABaseSettings()
-
-
-@pytest.fixture
-def mocked_object_store() -> Generator[dict, None, None]:
-    with patch('climatoology.store.object_store.Minio') as minio_client:
-        minio_storage = MinioStorage(
-            host='minio.test.org',
-            port=9999,
-            access_key='key',
-            secret_key='secret',
-            secure=True,
-            bucket='test_bucket',
-        )
-        minio_client.return_value.presigned_get_object.return_value = 'test-presigned-url'
-        yield {'minio_storage': minio_storage, 'minio_client': minio_client}
-
-
-class TestModel(BaseModel):
-    id: int = Field(title='ID', description='A required integer parameter.', examples=[1])
-    name: str = Field(
-        title='Name', description='An optional name parameter.', examples=['John Doe'], default='John Doe'
-    )
-    execution_time: float = Field(
-        title='Execution time',
-        description='The time for the compute to run (in seconds)',
-        examples=[10.0],
-        default=0.0,
-    )
 
 
 @pytest.fixture
@@ -157,8 +110,7 @@ def default_info() -> _Info:
         purpose=Path(__file__).parent / 'resources/test_purpose.md',
         methodology=Path(__file__).parent / 'resources/test_methodology.md',
         sources=Path(__file__).parent / 'resources/test.bib',
-        demo_input_parameters=TestModel(id=1),
-        demo_aoi=Path(__file__).parent / 'resources/test_aoi.geojson',
+        demo_config=compose_demo_config(input_parameters=TestModel(id=1)),
         computation_shelf_life=timedelta(days=1),
     )
     return info
@@ -212,6 +164,12 @@ class TestModel(BaseModel):
     name: str = Field(
         title='Name', description='An optional name parameter.', examples=['John Doe'], default='John Doe'
     )
+    execution_time: float = Field(
+        title='Execution time',
+        description='The time for the compute to run (in seconds)',
+        examples=[10.0],
+        default=0.0,
+    )
 
 
 @pytest.fixture
@@ -245,31 +203,6 @@ def default_plugin(
 
         celery_worker.reload()
         yield plugin
-
-
-@pytest.fixture
-def default_sender(
-    celery_app, mocked_object_store, set_basic_envs, default_backend_db
-) -> Generator[CelerySender, None, None]:
-    with (
-        patch('api_gateway.sender.Celery', return_value=celery_app),
-        patch(
-            'api_gateway.sender.CelerySender.construct_storage',
-            return_value=mocked_object_store['minio_storage'],
-        ),
-        patch('api_gateway.sender.BackendDatabase', return_value=default_backend_db),
-    ):
-        yield CelerySender()
-
-
-@pytest.fixture
-def mocked_client(default_sender) -> Generator[TestClient, None, None]:
-    app.state.settings = GatewaySettings()
-    app.state.platform = default_sender
-    FastAPICache.init(InMemoryBackend())
-    client = TestClient(app)
-
-    yield client
 
 
 def default_aoi_feature_geojson_pydantic(
@@ -315,21 +248,40 @@ def mocked_object_store() -> Generator[dict, None, None]:
 
 
 @pytest.fixture
+def default_computation_info(
+    general_uuid, default_aoi_feature_geojson_pydantic, default_artifact, default_info
+) -> ComputationInfo:
+    return ComputationInfo(
+        correlation_uuid=general_uuid,
+        timestamp=datetime(2018, 1, 1, 12),
+        deduplication_key=uuid.UUID('397e25df-3445-42a1-7e49-03466b3be5ca'),
+        cache_epoch=17532,
+        valid_until=datetime(2018, 1, 2),
+        params={'id': 1, 'name': 'John Doe', 'execution_time': 0.0},
+        requested_params={'id': 1},
+        aoi=default_aoi_feature_geojson_pydantic,
+        artifacts=[default_artifact],
+        plugin_info=PluginBaseInfo(plugin_id=default_info.plugin_id, plugin_version=default_info.version),
+        status=ComputationState.SUCCESS,
+    )
+
+
+@pytest.fixture
 def default_sender(
     celery_app, mocked_object_store, set_basic_envs, default_backend_db
 ) -> Generator[CelerySender, None, None]:
     with (
-        patch('climatoology.app.sender.Celery', return_value=celery_app),
+        patch('api_gateway.sender.CelerySender.construct_celery_app', return_value=celery_app),
         patch(
-            'climatoology.app.sender.CelerySender.construct_storage',
+            'api_gateway.sender.CelerySender.construct_storage',
             return_value=mocked_object_store['minio_storage'],
         ),
-        patch('climatoology.app.sender.BackendDatabase', return_value=default_backend_db),
+        patch('api_gateway.sender.BackendDatabase', return_value=default_backend_db),
     ):
         yield CelerySender()
 
 
-@pytest.fixture
+@pytest.fixture()
 def celery_worker_parameters():
     return {'hostname': 'test_plugin@hostname'}
 
@@ -337,7 +289,7 @@ def celery_worker_parameters():
 @pytest.fixture
 def celery_app(celery_app):
     # Add queue to the base celery_app, so the platform also knows about it (because we aren't running rabbitmq for real)
-    compute_queue = Queue('test_plugin', Exchange('climatoology'), 'test_plugin')
+    compute_queue = Queue('test_plugin', Exchange(EXCHANGE_NAME), 'test_plugin')
     celery_app.amqp.queues.select_add(compute_queue)
 
     yield celery_app
@@ -433,25 +385,6 @@ def backend_with_computations(
         computation_shelf_life=default_info_final.computation_shelf_life,
     )
     return default_backend_db
-
-
-@pytest.fixture
-def default_computation_info(
-    general_uuid, default_aoi_feature_geojson_pydantic, default_artifact, default_info
-) -> ComputationInfo:
-    return ComputationInfo(
-        correlation_uuid=general_uuid,
-        timestamp=datetime(2018, 1, 1, 12),
-        deduplication_key=uuid.UUID('397e25df-3445-42a1-7e49-03466b3be5ca'),
-        cache_epoch=17532,
-        valid_until=datetime(2018, 1, 2),
-        params={'id': 1, 'name': 'John Doe', 'execution_time': 0.0},
-        requested_params={'id': 1},
-        aoi=default_aoi_feature_geojson_pydantic,
-        artifacts=[default_artifact],
-        plugin_info=PluginBaseInfo(plugin_id=default_info.plugin_id, plugin_version=default_info.version),
-        status=ComputationState.SUCCESS,
-    )
 
 
 @pytest.fixture
