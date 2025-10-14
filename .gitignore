@@ -5,6 +5,7 @@ __pycache__/
 .vscode/
 .env.base
 .env.gateway
+.env.sender
 .coverage
 coverage.xml
 
