@@ -233,7 +233,7 @@ def default_sender(
     celery_app, mocked_object_store, set_basic_envs, default_backend_db
 ) -> Generator[CelerySender, None, None]:
     with (
-        patch('api_gateway.sender.CelerySender.construct_celery_app', return_value=celery_app),
+        patch('api_gateway.sender.Celery', return_value=celery_app),
         patch(
             'api_gateway.sender.CelerySender.construct_storage',
             return_value=mocked_object_store['minio_storage'],
