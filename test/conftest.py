@@ -149,6 +149,7 @@ def default_info_final(default_info) -> _Info:
 @pytest.fixture
 def default_artifact(general_uuid) -> _Artifact:
     return _Artifact(
+        rank=0,
         name='test_name',
         modality=ArtifactModality.MARKDOWN,
         file_path=Path(__file__).parent / 'resources/test_artifact_file.md',
