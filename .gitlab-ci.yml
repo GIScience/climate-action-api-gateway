@@ -165,9 +165,9 @@ deploy_staging:
   stage: deploy
   tags: [ k8s ]
   needs:
-    - build_staging
+    - docker_build_deploy_development
   rules:
-    - !reference [ build_staging, rules ]
+    - !reference [ docker_build_deploy_development, rules ]
   image: repo.heigit.org/heigit/argocd-cli:latest
   script:
     - |
