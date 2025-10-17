@@ -97,7 +97,7 @@ def test_send_compute(
             'params': {'id': 1, 'name': 'John Doe'},
         },
         task_id=str(general_uuid),
-        routing_key='test_plugin',
+        routing_key='test_plugin@_',
         exchange=EXCHANGE_NAME,
         time_limit=None,
         expires=None,
