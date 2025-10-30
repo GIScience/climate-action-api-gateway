@@ -133,7 +133,6 @@ def test_send_compute_produces_result(
     frozen_time,
 ):
     expected_computation_info = default_computation_info.model_copy(deep=True)
-    expected_computation_info.artifacts[0].store_id = ANY
     # TODO: discuss this
     # We no longer set the status to success in the computation info response sent as the task result, because we are
     # relying on the celery states instead. But, even though we aren't recording this status in our tables anymore, it
