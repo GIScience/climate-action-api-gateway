@@ -8,6 +8,7 @@ from uuid import UUID
 import geojson_pydantic
 from climatoology.base.baseoperator import AoiProperties
 from climatoology.base.info import _Info
+from climatoology.store.database.database import DEMO_SUFFIX
 from climatoology.utility.exception import InfoNotReceivedError, VersionMismatchError
 from fastapi import APIRouter, Body, HTTPException
 from fastapi_cache.decorator import cache
@@ -133,7 +134,7 @@ async def plugin_demo(plugin_id: str, request: Request) -> CorrelationIdObject:
     if not info.demo_config:
         raise HTTPException(status_code=404, detail=f'Plugin {plugin_id} does not provide a demo.')
 
-    demo_aoi_properties = AoiProperties(name=info.demo_config.name, id=f'{plugin_id}-demo')
+    demo_aoi_properties = AoiProperties(name=info.demo_config.name, id=f'{plugin_id}{DEMO_SUFFIX}')
     aoi_feature = geojson_pydantic.Feature(
         type='Feature', geometry=info.demo_config.aoi, properties=demo_aoi_properties
     )
