@@ -8,7 +8,7 @@ import climatoology
 import geojson_pydantic
 from celery import Celery
 from celery.result import AsyncResult
-from climatoology.app.plugin import extract_plugin_id, generate_plugin_name
+from climatoology.app.plugin import extract_plugin_id
 from climatoology.app.settings import EXCHANGE_NAME, CABaseSettings
 from climatoology.base.baseoperator import AoiProperties
 from climatoology.base.info import _Info
@@ -143,7 +143,6 @@ class CelerySender:
         )
 
         if deduplicated_correlation_uuid == correlation_uuid:
-            plugin_name = generate_plugin_name(plugin_id)
             return self.celery_app.send_task(
                 name='compute',
                 kwargs={
@@ -151,7 +150,7 @@ class CelerySender:
                     'params': params,
                 },
                 task_id=str(correlation_uuid),
-                routing_key=plugin_name,  # TODO: change to plugin_id in climatoology v7
+                routing_key=plugin_id,
                 exchange=EXCHANGE_NAME,
                 time_limit=task_time_limit,
                 expires=q_time,
