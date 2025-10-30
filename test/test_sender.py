@@ -359,6 +359,7 @@ def test_send_compute_artifact_errors_invalidate_cache(
     default_aoi_feature_geojson_pydantic,
     default_sender,
     default_backend_db,
+    general_uuid,
 ):
     class TestOperator(BaseOperator[TestModel]):
         def info(self) -> _Info:
@@ -384,16 +385,15 @@ def test_send_compute_artifact_errors_invalidate_cache(
         _ = _create_plugin(operator=operator, settings=default_settings)
         celery_worker.reload()
 
-    correlation_uuid = uuid.uuid4()
     result = default_sender.send_compute_request(
         plugin_id='test_plugin',
         aoi=default_aoi_feature_geojson_pydantic,
         params={'id': 1, 'name': 'John Doe'},
-        correlation_uuid=correlation_uuid,
+        correlation_uuid=general_uuid,
     )
     _ = result.get(timeout=5)
 
-    stored_computation_info = default_backend_db.read_computation(correlation_uuid)
+    stored_computation_info = default_backend_db.read_computation(general_uuid)
     assert stored_computation_info.cache_epoch is None
 
 
