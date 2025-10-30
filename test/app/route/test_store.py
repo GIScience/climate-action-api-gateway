@@ -14,6 +14,8 @@ def test_fetch_metadata(mocked_client, deduplicated_uuid, default_computation_in
     # The decision should be a little different for this test, but we should decide what we want to get as a response
     # here!
     expected_metadata['status'] = ANY
+    # TODO: this is a "completed the full cyrcle" artifact, so it has a rank...
+    expected_metadata['artifacts'][0]['rank'] = 0
 
     response = mocked_client.get(f'/store/{deduplicated_uuid}/metadata')
     metadata = response.json()
