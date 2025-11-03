@@ -12,9 +12,9 @@ repository = "https://gitlab.heigit.org/climate-action/api-gateway"
 
 requires-python = ">=3.11.5,<3.12"
 dependencies = [
-    "fastapi (>=0.118.0,<0.119.0)",
-    "starlette (>=0.48.0,<0.49.0)",
-    "uvicorn[standard] (>=0.37.0,<0.38.0)",
+    "fastapi (>=0.121.0,<0.122.0)",
+    "starlette (>=0.49.0,<0.50.0)",
+    "uvicorn[standard] (>=0.38.0,<0.39.0)",
     "fastapi-cache2[memcache] (>=0.2.2,<0.3.0)",
     "climatoology @ git+ssh://git@gitlab.heigit.org:2022/climate-action/climatoology.git@6.4.3",
     "semver (>=3.0.2,<4.0.0)",
