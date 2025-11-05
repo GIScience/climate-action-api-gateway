@@ -13,7 +13,7 @@ import sqlalchemy
 from celery import Celery
 from climatoology.app.plugin import _create_plugin
 from climatoology.app.settings import CABaseSettings
-from climatoology.base.artifact import ArtifactModality, _Artifact, create_markdown_artifact
+from climatoology.base.artifact import ArtifactMetadata, ArtifactModality, _Artifact, create_markdown_artifact
 from climatoology.base.baseoperator import AoiProperties, BaseOperator
 from climatoology.base.computation import ComputationResources
 from climatoology.base.event import ComputationState
@@ -185,12 +185,15 @@ def default_operator(default_info, default_artifact) -> Generator[BaseOperator, 
         ) -> List[_Artifact]:
             time.sleep(params.execution_time)
             artifact_text = (Path(__file__).parent / 'resources/test_purpose.md').read_text()
+            artifact_metadata = ArtifactMetadata(
+                name=default_artifact.name,
+                summary=default_artifact.summary,
+                filename='test_artifact_file',
+            )
             artifact = create_markdown_artifact(
                 text=artifact_text,
+                metadata=artifact_metadata,
                 resources=resources,
-                name=default_artifact.name,
-                tl_dr=default_artifact.summary,
-                filename='test_artifact_file',
             )
             return [artifact]
 
