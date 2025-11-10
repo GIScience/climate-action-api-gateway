@@ -13,7 +13,13 @@ import sqlalchemy
 from celery import Celery
 from climatoology.app.plugin import _create_plugin
 from climatoology.app.settings import CABaseSettings
-from climatoology.base.artifact import ArtifactMetadata, ArtifactModality, _Artifact, create_markdown_artifact
+from climatoology.base.artifact import (
+    ArtifactEnriched,
+    ArtifactMetadata,
+    ArtifactModality,
+    _Artifact,
+    create_markdown_artifact,
+)
 from climatoology.base.baseoperator import AoiProperties, BaseOperator
 from climatoology.base.computation import ComputationResources
 from climatoology.base.event import ComputationState
@@ -109,7 +115,8 @@ def default_info() -> _Info:
         teaser='This plugin does nothing and that is good.',
         purpose=Path(__file__).parent / 'resources/test_purpose.md',
         methodology=Path(__file__).parent / 'resources/test_methodology.md',
-        sources=Path(__file__).parent / 'resources/test.bib',
+        sources_library=Path(__file__).parent / 'resources/test.bib',
+        info_sources={'test2023'},
         demo_config=compose_demo_config(input_parameters=TestModel(id=1)),
         computation_shelf_life=timedelta(days=1),
     )
@@ -153,8 +160,12 @@ def default_artifact(general_uuid) -> _Artifact:
         modality=ArtifactModality.MARKDOWN,
         filename='test_artifact_file.md',
         summary='Test summary',
-        correlation_uuid=general_uuid,
     )
+
+
+@pytest.fixture
+def default_artifact_enriched(default_artifact, general_uuid) -> ArtifactEnriched:
+    return ArtifactEnriched(**default_artifact.model_dump(), rank=0, correlation_uuid=general_uuid)
 
 
 class TestModel(BaseModel):
@@ -259,7 +270,7 @@ def mocked_object_store() -> Generator[dict, None, None]:
 
 @pytest.fixture
 def default_computation_info(
-    general_uuid, default_aoi_feature_geojson_pydantic, default_artifact, default_info
+    general_uuid, default_aoi_feature_geojson_pydantic, default_artifact_enriched, default_info
 ) -> ComputationInfo:
     return ComputationInfo(
         correlation_uuid=general_uuid,
@@ -270,7 +281,7 @@ def default_computation_info(
         params={'id': 1, 'name': 'John Doe', 'execution_time': 0.0},
         requested_params={'id': 1},
         aoi=default_aoi_feature_geojson_pydantic,
-        artifacts=[default_artifact],
+        artifacts=[default_artifact_enriched],
         plugin_info=PluginBaseInfo(id=default_info.id, version=default_info.version),
         status=ComputationState.SUCCESS,
     )
