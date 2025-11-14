@@ -43,7 +43,7 @@ def _extract_computation_status(correlation_uuid: UUID, request: Request) -> Tup
         if db_computations is None:
             raise HTTPException(status_code=404, detail=f'Correlation UUID {correlation_uuid} is unknown.')
         else:
-            if db_computations.timestamp + timedelta(
+            if db_computations.request_ts + timedelta(
                 seconds=request.app.state.settings.computation_queue_time
             ) < datetime.now(UTC).replace(tzinfo=None):
                 log.warning(
