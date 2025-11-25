@@ -6,17 +6,14 @@ import pytest
 import shapely
 from celery.exceptions import TaskRevokedError
 from celery.result import AsyncResult
+from climatoology.app.exception import VersionMismatchError
 from climatoology.app.plugin import _create_plugin
 from climatoology.base.artifact import _Artifact
 from climatoology.base.baseoperator import AoiProperties, BaseOperator
 from climatoology.base.computation import ComputationResources
+from climatoology.base.exception import ClimatoologyUserError, InputValidationError
 from climatoology.base.info import _Info
 from climatoology.store.object_store import ComputationInfo
-from climatoology.utility.exception import (
-    ClimatoologyUserError,
-    InputValidationError,
-    VersionMismatchError,
-)
 from semver import Version
 
 from api_gateway.sender import EXCHANGE_NAME, CacheOverrides, CelerySender

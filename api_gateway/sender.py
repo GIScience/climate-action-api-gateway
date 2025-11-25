@@ -8,13 +8,13 @@ import climatoology
 import geojson_pydantic
 from celery import Celery
 from celery.result import AsyncResult
+from climatoology.app.exception import VersionMismatchError
 from climatoology.app.plugin import extract_plugin_id
 from climatoology.app.settings import EXCHANGE_NAME, CABaseSettings
 from climatoology.base.baseoperator import AoiProperties
 from climatoology.base.info import _Info
 from climatoology.store.database.database import BackendDatabase
 from climatoology.store.object_store import MinioStorage, Storage
-from climatoology.utility.exception import VersionMismatchError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 log = logging.getLogger(__name__)

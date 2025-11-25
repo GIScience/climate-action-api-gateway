@@ -7,7 +7,7 @@ from uuid import UUID
 from celery.exceptions import TaskRevokedError, TimeLimitExceeded
 from celery.result import AsyncResult
 from climatoology.base.event import ComputationState
-from climatoology.utility.exception import ClimatoologyUserError, InputValidationError
+from climatoology.base.exception import ClimatoologyUserError, InputValidationError
 from fastapi import APIRouter, HTTPException, WebSocketException
 from fastapi_cache.decorator import cache
 from starlette.requests import Request

@@ -6,10 +6,11 @@ from typing import Annotated, List
 from uuid import UUID
 
 import geojson_pydantic
+from climatoology.app.exception import VersionMismatchError
 from climatoology.base.baseoperator import AoiProperties
 from climatoology.base.info import _Info
 from climatoology.store.database.database import DEMO_SUFFIX
-from climatoology.utility.exception import InfoNotReceivedError, VersionMismatchError
+from climatoology.store.exception import InfoNotReceivedError
 from fastapi import APIRouter, Body, HTTPException
 from fastapi_cache.decorator import cache
 from starlette.requests import Request
