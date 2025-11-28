@@ -8,12 +8,11 @@ from celery.exceptions import TaskRevokedError
 from celery.result import AsyncResult
 from climatoology.app.exception import VersionMismatchError
 from climatoology.app.plugin import _create_plugin
-from climatoology.base.artifact import _Artifact
+from climatoology.base.artifact import Artifact
 from climatoology.base.baseoperator import AoiProperties, BaseOperator
-from climatoology.base.computation import ComputationResources
+from climatoology.base.computation import ComputationInfo, ComputationResources
 from climatoology.base.exception import ClimatoologyUserError, InputValidationError
-from climatoology.base.info import _Info
-from climatoology.store.object_store import ComputationInfo
+from climatoology.base.plugin_info import PluginInfo
 from semver import Version
 
 from api_gateway.sender import EXCHANGE_NAME, CacheOverrides, CelerySender
@@ -267,7 +266,7 @@ def test_send_compute_state_receives_ClimatoologyUserError(  # noqa: N802 - allo
     default_backend_db,
 ):
     class TestOperator(BaseOperator[TestModel]):
-        def info(self) -> _Info:
+        def info(self) -> PluginInfo:
             return default_info.model_copy()
 
         def compute(
@@ -276,7 +275,7 @@ def test_send_compute_state_receives_ClimatoologyUserError(  # noqa: N802 - allo
             aoi: shapely.MultiPolygon,
             aoi_properties: AoiProperties,
             params: TestModel,
-        ) -> List[_Artifact]:
+        ) -> List[Artifact]:
             raise ClimatoologyUserError('Error message to store for the user')
 
     operator = TestOperator()
@@ -312,7 +311,7 @@ def test_send_compute_ClimatoologyUserError_is_not_cached(  # noqa: N802
     default_backend_db,
 ):
     class TestOperator(BaseOperator[TestModel]):
-        def info(self) -> _Info:
+        def info(self) -> PluginInfo:
             return default_info.model_copy()
 
         def compute(
@@ -321,7 +320,7 @@ def test_send_compute_ClimatoologyUserError_is_not_cached(  # noqa: N802
             aoi: shapely.MultiPolygon,
             aoi_properties: AoiProperties,
             params: TestModel,
-        ) -> List[_Artifact]:
+        ) -> List[Artifact]:
             raise ClimatoologyUserError('Error message to store for the user')
 
     operator = TestOperator()
@@ -359,7 +358,7 @@ def test_send_compute_artifact_errors_invalidate_cache(
     general_uuid,
 ):
     class TestOperator(BaseOperator[TestModel]):
-        def info(self) -> _Info:
+        def info(self) -> PluginInfo:
             return default_info.model_copy()
 
         def compute(
@@ -368,7 +367,7 @@ def test_send_compute_artifact_errors_invalidate_cache(
             aoi: shapely.MultiPolygon,
             aoi_properties: AoiProperties,
             params: TestModel,
-        ) -> List[_Artifact]:
+        ) -> List[Artifact]:
             with self.catch_exceptions('failing_indicator', resources):
                 raise ClimatoologyUserError()
 

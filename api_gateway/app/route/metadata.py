@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from climatoology.base.info import Concern
+from climatoology.base.plugin_info import Concern
 from fastapi import APIRouter
 
 router = APIRouter(prefix='/metadata', tags=['metadata'])

@@ -14,27 +14,27 @@ from celery import Celery
 from climatoology.app.plugin import _create_plugin
 from climatoology.app.settings import CABaseSettings
 from climatoology.base.artifact import (
+    Artifact,
     ArtifactEnriched,
     ArtifactMetadata,
     ArtifactModality,
-    _Artifact,
-    create_markdown_artifact,
 )
+from climatoology.base.artifact_creators import create_markdown_artifact
 from climatoology.base.baseoperator import AoiProperties, BaseOperator
-from climatoology.base.computation import ComputationResources
+from climatoology.base.computation import ComputationInfo, ComputationResources
 from climatoology.base.event import ComputationState
-from climatoology.base.info import (
+from climatoology.base.plugin_info import (
     Assets,
     Concern,
     PluginAuthor,
     PluginBaseInfo,
-    _Info,
+    PluginInfo,
     compose_demo_config,
     generate_plugin_info,
 )
 from climatoology.store.database import migration
 from climatoology.store.database.database import BackendDatabase
-from climatoology.store.object_store import ComputationInfo, MinioStorage
+from climatoology.store.object_store import MinioStorage
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
 from freezegun import freeze_time
@@ -99,7 +99,7 @@ def frozen_time():
 
 
 @pytest.fixture
-def default_info() -> _Info:
+def default_info() -> PluginInfo:
     info = generate_plugin_info(
         name='Test Plugin',
         authors=[
@@ -124,7 +124,7 @@ def default_info() -> _Info:
 
 
 @pytest.fixture
-def default_info_final(default_info) -> _Info:
+def default_info_final(default_info) -> PluginInfo:
     default_info_final = default_info.model_copy(deep=True)
     default_info_final.assets = Assets(icon='assets/test_plugin/latest/ICON.png')
     default_info_final.operator_schema = {
@@ -154,8 +154,8 @@ def default_info_final(default_info) -> _Info:
 
 
 @pytest.fixture
-def default_artifact(general_uuid) -> _Artifact:
-    return _Artifact(
+def default_artifact(general_uuid) -> Artifact:
+    return Artifact(
         name='test_name',
         modality=ArtifactModality.MARKDOWN,
         filename='test_artifact_file.md',
@@ -184,7 +184,7 @@ class TestModel(BaseModel):
 @pytest.fixture
 def default_operator(default_info, default_artifact) -> Generator[BaseOperator, None, None]:
     class TestOperator(BaseOperator[TestModel]):
-        def info(self) -> _Info:
+        def info(self) -> PluginInfo:
             return default_info.model_copy(deep=True)
 
         def compute(
@@ -193,7 +193,7 @@ def default_operator(default_info, default_artifact) -> Generator[BaseOperator, 
             aoi: shapely.MultiPolygon,
             aoi_properties: AoiProperties,
             params: TestModel,
-        ) -> List[_Artifact]:
+        ) -> List[Artifact]:
             time.sleep(params.execution_time)
             artifact_text = (Path(__file__).parent / 'resources/test_purpose.md').read_text()
             artifact_metadata = ArtifactMetadata(
@@ -275,7 +275,7 @@ def default_computation_info(
     return ComputationInfo(
         correlation_uuid=general_uuid,
         request_ts=datetime(2018, 1, 1, 12),
-        deduplication_key=uuid.UUID('397e25df-3445-42a1-7e49-03466b3be5ca'),
+        deduplication_key=uuid.UUID('24209215-3397-e96c-2bf2-084116c66532'),
         cache_epoch=17532,
         valid_until=datetime(2018, 1, 2),
         params={'id': 1, 'name': 'John Doe', 'execution_time': 0.0},
@@ -380,16 +380,26 @@ def default_backend_db(db_with_tables) -> BackendDatabase:
 
 
 @pytest.fixture
+def default_plugin_key(default_info) -> str:
+    return f'{default_info.id};{default_info.version}'
+
+
+@pytest.fixture
 def backend_with_computations(
-    default_backend_db, default_computation_info, default_info_final, deduplicated_uuid, set_basic_envs, frozen_time
+    default_backend_db,
+    default_computation_info,
+    default_info_final,
+    deduplicated_uuid,
+    set_basic_envs,
+    frozen_time,
+    default_plugin_key,
 ) -> BackendDatabase:
     default_backend_db.write_info(info=default_info_final)
     default_backend_db.register_computation(
         correlation_uuid=default_computation_info.correlation_uuid,
         requested_params=default_computation_info.requested_params,
         aoi=default_computation_info.aoi,
-        plugin_id=default_computation_info.plugin_info.id,
-        plugin_version=default_computation_info.plugin_info.version,
+        plugin_key=default_plugin_key,
         computation_shelf_life=default_info_final.computation_shelf_life,
     )
     default_backend_db.add_validated_params(
@@ -401,8 +411,7 @@ def backend_with_computations(
         correlation_uuid=deduplicated_uuid,
         requested_params=default_computation_info.requested_params,
         aoi=default_computation_info.aoi,
-        plugin_id=default_computation_info.plugin_info.id,
-        plugin_version=default_computation_info.plugin_info.version,
+        plugin_key=default_plugin_key,
         computation_shelf_life=default_info_final.computation_shelf_life,
     )
     return default_backend_db

@@ -12,7 +12,7 @@ from climatoology.app.exception import VersionMismatchError
 from climatoology.app.plugin import extract_plugin_id
 from climatoology.app.settings import EXCHANGE_NAME, CABaseSettings
 from climatoology.base.baseoperator import AoiProperties
-from climatoology.base.info import _Info
+from climatoology.base.plugin_info import PluginInfo
 from climatoology.store.database.database import BackendDatabase
 from climatoology.store.object_store import MinioStorage, Storage
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -89,7 +89,7 @@ class CelerySender:
 
         return plugins
 
-    def request_info(self, plugin_id: str, ttl: int = 3) -> _Info:
+    def request_info(self, plugin_id: str, ttl: int = 3) -> PluginInfo:
         log.debug(f"Requesting 'info' from {plugin_id}.")
         info_return = self.backend_db.read_info(plugin_id=plugin_id)
 
@@ -121,6 +121,8 @@ class CelerySender:
         assert aoi.properties is not None, 'AOI properties are required'
 
         plugin_info = self.request_info(plugin_id)
+        # TODO: refactor this?
+        plugin_key = self.backend_db.read_info_key(plugin_id)
 
         match override_shelf_life:
             case CacheOverrides.FOREVER:
@@ -134,8 +136,7 @@ class CelerySender:
 
         # Register the task now, before it gets queued
         deduplicated_correlation_uuid = self.backend_db.register_computation(
-            plugin_id=plugin_id,
-            plugin_version=plugin_info.version,
+            plugin_key=plugin_key,
             computation_shelf_life=computation_shelf_life,
             correlation_uuid=correlation_uuid,
             requested_params=params,

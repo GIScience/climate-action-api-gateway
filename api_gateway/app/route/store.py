@@ -2,8 +2,8 @@ from datetime import timedelta
 from typing import List
 from uuid import UUID
 
-from climatoology.base.artifact import _Artifact
-from climatoology.store.object_store import ComputationInfo
+from climatoology.base.artifact import Artifact
+from climatoology.base.computation import ComputationInfo
 from fastapi import APIRouter, HTTPException
 from fastapi_cache.decorator import cache
 from starlette.requests import Request
@@ -58,7 +58,7 @@ def fetch_metadata(correlation_uuid: UUID, request: Request) -> ComputationInfo:
     'To receive actual content you need to use the store uuid returned.',
 )
 @cache(expire=cache_ttl(60))
-def list_artifacts(correlation_uuid: UUID, request: Request) -> List[_Artifact]:
+def list_artifacts(correlation_uuid: UUID, request: Request) -> List[Artifact]:
     computation_uuid = request.app.state.platform.backend_db.resolve_computation_id(correlation_uuid)
     return request.app.state.platform.storage.list_all(correlation_uuid=computation_uuid)
 
