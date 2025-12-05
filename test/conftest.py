@@ -21,15 +21,13 @@ from climatoology.base.artifact import (
 )
 from climatoology.base.artifact_creators import create_markdown_artifact
 from climatoology.base.baseoperator import AoiProperties, BaseOperator
-from climatoology.base.computation import ComputationInfo, ComputationResources
+from climatoology.base.computation import ComputationInfo, ComputationPluginInfo, ComputationResources
 from climatoology.base.event import ComputationState
 from climatoology.base.plugin_info import (
-    Assets,
     Concern,
     PluginAuthor,
-    PluginBaseInfo,
     PluginInfo,
-    compose_demo_config,
+    PluginInfoEnriched,
     generate_plugin_info,
 )
 from climatoology.store.database import migration
@@ -110,47 +108,24 @@ def default_info() -> PluginInfo:
             )
         ],
         icon=Path(__file__).parent / 'resources/test_icon.jpeg',
-        version=Version.parse('3.1.0'),
         concerns={Concern.CLIMATE_ACTION__GHG_EMISSION},
         teaser='This plugin does nothing and that is good.',
         purpose=Path(__file__).parent / 'resources/test_purpose.md',
         methodology=Path(__file__).parent / 'resources/test_methodology.md',
         sources_library=Path(__file__).parent / 'resources/test.bib',
-        info_sources={'test2023'},
-        demo_config=compose_demo_config(input_parameters=TestModel(id=1)),
+        info_source_keys={'test2023'},
+        demo_input_parameters=TestModel(id=1),
         computation_shelf_life=timedelta(days=1),
     )
+    info.version = Version(3, 1, 0)
     return info
 
 
 @pytest.fixture
-def default_info_final(default_info) -> PluginInfo:
-    default_info_final = default_info.model_copy(deep=True)
-    default_info_final.assets = Assets(icon='assets/test_plugin/latest/ICON.png')
-    default_info_final.operator_schema = {
-        'properties': {
-            'id': {'description': 'A required integer parameter.', 'examples': [1], 'title': 'ID', 'type': 'integer'},
-            'name': {
-                'default': 'John Doe',
-                'description': 'An optional name parameter.',
-                'examples': ['John Doe'],
-                'title': 'Name',
-                'type': 'string',
-            },
-            'execution_time': {
-                'default': 0.0,
-                'description': 'The time for the compute to run (in seconds)',
-                'examples': [10.0],
-                'title': 'Execution time',
-                'type': 'number',
-            },
-        },
-        'required': ['id'],
-        'title': 'TestModel',
-        'type': 'object',
-    }
-
-    return default_info_final
+def default_info_final(default_operator) -> PluginInfoEnriched:
+    final_info = default_operator.info_enriched.model_copy(deep=True)
+    final_info.assets.icon = 'assets/test_plugin/latest/ICON.png'
+    return final_info
 
 
 @pytest.fixture
@@ -270,7 +245,7 @@ def mocked_object_store() -> Generator[dict, None, None]:
 
 @pytest.fixture
 def default_computation_info(
-    general_uuid, default_aoi_feature_geojson_pydantic, default_artifact_enriched, default_info
+    general_uuid, default_aoi_feature_geojson_pydantic, default_artifact_enriched, default_info_final
 ) -> ComputationInfo:
     return ComputationInfo(
         correlation_uuid=general_uuid,
@@ -282,7 +257,7 @@ def default_computation_info(
         requested_params={'id': 1},
         aoi=default_aoi_feature_geojson_pydantic,
         artifacts=[default_artifact_enriched],
-        plugin_info=PluginBaseInfo(id=default_info.id, version=default_info.version),
+        plugin_info=ComputationPluginInfo(id=default_info_final.id, version=default_info_final.version),
         status=ComputationState.SUCCESS,
     )
 
