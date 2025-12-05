@@ -8,7 +8,7 @@ from uuid import UUID
 import geojson_pydantic
 from climatoology.app.exception import VersionMismatchError
 from climatoology.base.baseoperator import AoiProperties
-from climatoology.base.plugin_info import PluginInfoEnriched
+from climatoology.base.plugin_info import PluginInfoFinal
 from climatoology.store.database.database import DEMO_PREFIX
 from climatoology.store.exception import InfoNotReceivedError
 from fastapi import APIRouter, Body, HTTPException
@@ -40,7 +40,7 @@ class CorrelationIdObject:
 
 @router.get(path='', summary='List all currently available plugins.')
 @cache(expire=cache_ttl(60))
-async def list_plugins(request: Request) -> List[PluginInfoEnriched]:
+async def list_plugins(request: Request) -> List[PluginInfoFinal]:
     plugin_ids = list(request.app.state.platform.list_active_plugins())
     plugin_ids.sort()
 
@@ -58,7 +58,7 @@ async def list_plugins(request: Request) -> List[PluginInfoEnriched]:
 
 @router.get(path='/{plugin_id}', summary='Get information on a specific plugin or check its online status.')
 @cache(expire=cache_ttl(60 * 60))
-async def get_plugin(plugin_id: str, request: Request) -> PluginInfoEnriched:
+async def get_plugin(plugin_id: str, request: Request) -> PluginInfoFinal:
     try:
         return request.app.state.platform.request_info(plugin_id=plugin_id)
     except InfoNotReceivedError as e:

@@ -24,10 +24,11 @@ from climatoology.base.baseoperator import AoiProperties, BaseOperator
 from climatoology.base.computation import ComputationInfo, ComputationPluginInfo, ComputationResources
 from climatoology.base.event import ComputationState
 from climatoology.base.plugin_info import (
+    AssetsFinal,
     Concern,
     PluginAuthor,
     PluginInfo,
-    PluginInfoEnriched,
+    PluginInfoFinal,
     generate_plugin_info,
 )
 from climatoology.store.database import migration
@@ -122,10 +123,11 @@ def default_info() -> PluginInfo:
 
 
 @pytest.fixture
-def default_info_final(default_operator) -> PluginInfoEnriched:
-    final_info = default_operator.info_enriched.model_copy(deep=True)
-    final_info.assets.icon = 'assets/test_plugin/latest/ICON.png'
-    return final_info
+def default_info_final(default_operator) -> PluginInfoFinal:
+    return PluginInfoFinal(
+        **default_operator.info_enriched.model_dump(exclude={'assets'}, mode='json'),
+        assets=AssetsFinal(icon='assets/test_plugin/latest/ICON.png'),
+    )
 
 
 @pytest.fixture

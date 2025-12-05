@@ -12,7 +12,7 @@ from climatoology.app.exception import VersionMismatchError
 from climatoology.app.plugin import extract_plugin_id
 from climatoology.app.settings import EXCHANGE_NAME, CABaseSettings
 from climatoology.base.baseoperator import AoiProperties
-from climatoology.base.plugin_info import PluginInfoEnriched
+from climatoology.base.plugin_info import PluginInfoFinal
 from climatoology.store.database.database import BackendDatabase
 from climatoology.store.object_store import MinioStorage, Storage
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -89,7 +89,7 @@ class CelerySender:
 
         return plugins
 
-    def request_info(self, plugin_id: str, ttl: int = 3) -> PluginInfoEnriched:
+    def request_info(self, plugin_id: str, ttl: int = 3) -> PluginInfoFinal:
         log.debug(f"Requesting 'info' from {plugin_id}.")
         info_return = self.backend_db.read_info(plugin_id=plugin_id)
 
