@@ -21,8 +21,7 @@ from climatoology.base.artifact import (
 )
 from climatoology.base.artifact_creators import create_markdown_artifact
 from climatoology.base.baseoperator import AoiProperties, BaseOperator
-from climatoology.base.computation import ComputationInfo, ComputationPluginInfo, ComputationResources
-from climatoology.base.event import ComputationState
+from climatoology.base.computation import ComputationInfo, ComputationPluginInfo, ComputationResources, ComputationState
 from climatoology.base.plugin_info import (
     AssetsFinal,
     Concern,

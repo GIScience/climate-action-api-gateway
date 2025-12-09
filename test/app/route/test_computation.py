@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 from celery.result import AsyncResult
-from climatoology.base.event import ComputationState
+from climatoology.base.computation import ComputationState
 from starlette.websockets import WebSocketDisconnect
 
 
