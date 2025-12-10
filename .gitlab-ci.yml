@@ -96,7 +96,7 @@ optional_linting:
       - 1
 
 build_staging:
-  stage: deploy
+  stage: build
   tags: [ k8s ]
   rules:
     - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"
@@ -142,7 +142,7 @@ deploy_staging:
   stage: deploy
   tags: [ k8s ]
   needs:
-    - docker_build_deploy_development
+    - build_staging
   rules:
     - !reference [ build_staging, rules ]
   image: repo.heigit.org/heigit/argocd-cli:latest
