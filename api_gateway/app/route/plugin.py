@@ -75,7 +75,7 @@ def get_plugin_status(plugin_id: str, request: Request) -> PluginStatusObject:
     try:
         pong = request.app.state.platform.celery_app.control.inspect().ping()
         pong = [response for key, response in pong.items() if key.startswith(plugin_id)]
-        if pong and {'ok': 'pong'} in pong:
+        if {'ok': 'pong'} in pong:
             return PluginStatusObject(status=PluginStatus.ONLINE)
     except Exception as e:
         log.debug(f'Plugin {plugin_id} ping failed', exc_info=e)
