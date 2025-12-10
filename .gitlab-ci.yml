@@ -95,30 +95,7 @@ optional_linting:
     exit_codes:
       - 1
 
-docker_build_deploy_canary:
-  stage: deploy
-  tags: [ k8s ]
-  rules:
-    - if: $CI_COMMIT_BRANCH == "development" && $CI_PIPELINE_SOURCE == "push"
-    - if: $CI_PIPELINE_SOURCE == "pipeline"
-  image: docker.io/docker:cli
-  before_script:
-    - echo ${CI_DOCKER_TOKEN} | docker --config ~/ca_config login ${REGISTRY_URL} -u ${CI_DOCKER_USER} --password-stdin
-    - docker --config ~/ca_config buildx create --use --name=kube --driver remote tcp://amd64-buildkit-service.ci-cd.svc:1234
-  script:
-    - |
-      docker --config ~/ca_config \
-        buildx build \
-        --builder=kube \
-        --secret id=CI_JOB_TOKEN \
-        --build-arg "CANARY=true" \
-        --cache-from=type=registry,ref=${REGISTRY_URL}/${GROUP_NAME}/${CI_PROJECT_NAME}:buildcache \
-        --cache-to=type=registry,ref=${REGISTRY_URL}/${GROUP_NAME}/${CI_PROJECT_NAME}:buildcache,mode=max \
-        --tag ${REGISTRY_URL}/${GROUP_NAME}/${CI_PROJECT_NAME}:canary \
-        --push \
-        .
-
-docker_build_deploy_development:
+build_staging:
   stage: deploy
   tags: [ k8s ]
   rules:
@@ -167,7 +144,7 @@ deploy_staging:
   needs:
     - docker_build_deploy_development
   rules:
-    - !reference [ docker_build_deploy_development, rules ]
+    - !reference [ build_staging, rules ]
   image: repo.heigit.org/heigit/argocd-cli:latest
   script:
     - |
