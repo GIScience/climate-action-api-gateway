@@ -20,10 +20,6 @@ def test_computation_status_unknown(mocked_client, general_uuid):
 
 
 def test_computation_status_success(mocked_client, default_plugin, default_aoi_pure_dict):
-    # pytest-celery uses a CacheBackend instead of our DatabaseBackend, so we need to actually send a test for it to
-    # exist to celery and be able to be created as an AsyncResult to correctly query it's state.
-    # TODO: discuss this
-
     correlation_uuid = uuid.uuid4()
     with patch('api_gateway.app.route.plugin.uuid.uuid4', return_value=correlation_uuid):
         response = mocked_client.post('/plugin/test_plugin', json={'aoi': default_aoi_pure_dict, 'params': {'id': 1}})
