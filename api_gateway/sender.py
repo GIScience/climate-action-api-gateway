@@ -120,21 +120,19 @@ class CelerySender:
 
         assert aoi.properties is not None, 'AOI properties are required'
 
-        plugin_info = self.request_info(plugin_id)
-        # TODO: refactor this?
-        plugin_key = self.backend_db.read_info_key(plugin_id)
-
         match override_shelf_life:
             case CacheOverrides.FOREVER:
                 computation_shelf_life = None
             case CacheOverrides.NEVER:
                 computation_shelf_life = timedelta(0)
             case _:
+                plugin_info = self.request_info(plugin_id)
                 computation_shelf_life = (
                     plugin_info.computation_shelf_life if self.deduplicate_computations else timedelta(0)
                 )
 
         # Register the task now, before it gets queued
+        plugin_key = self.backend_db.read_info_key(plugin_id)
         deduplicated_correlation_uuid = self.backend_db.register_computation(
             plugin_key=plugin_key,
             computation_shelf_life=computation_shelf_life,
