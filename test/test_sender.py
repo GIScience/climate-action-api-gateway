@@ -1,6 +1,6 @@
 import uuid
 from typing import List
-from unittest.mock import ANY, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 import shapely
@@ -129,11 +129,7 @@ def test_send_compute_produces_result(
     frozen_time,
 ):
     expected_computation_info = default_computation_info.model_copy(deep=True)
-    # TODO: discuss this
-    # We no longer set the status to success in the computation info response sent as the task result, because we are
-    # relying on the celery states instead. But, even though we aren't recording this status in our tables anymore, it
-    # might make sense to still return success in the object returned from the task?
-    expected_computation_info.status = ANY
+    expected_computation_info.status = None
 
     result = default_sender.send_compute_request(
         plugin_id='test_plugin',
