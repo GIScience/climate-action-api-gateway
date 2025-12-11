@@ -95,6 +95,11 @@ def frozen_time():
 
 
 @pytest.fixture
+def default_plugin_key(default_info) -> str:
+    return f'{default_info.id};{default_info.version}'
+
+
+@pytest.fixture
 def default_info() -> PluginInfo:
     info = generate_plugin_info(
         name='Test Plugin',
@@ -340,11 +345,6 @@ def db_with_tables(db_with_postgis, alembic_runner) -> str:
 @pytest.fixture
 def default_backend_db(db_with_tables) -> BackendDatabase:
     return BackendDatabase(connection_string=db_with_tables, user_agent='Test Climatoology Backend')
-
-
-@pytest.fixture
-def default_plugin_key(default_info) -> str:
-    return f'{default_info.id};{default_info.version}'
 
 
 @pytest.fixture
