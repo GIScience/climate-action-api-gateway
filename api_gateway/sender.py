@@ -89,7 +89,7 @@ class CelerySender:
 
         return plugins
 
-    def request_info(self, plugin_id: str, ttl: int = 3) -> PluginInfoFinal:
+    def request_info(self, plugin_id: str) -> PluginInfoFinal:
         log.debug(f"Requesting 'info' from {plugin_id}.")
         info_return = self.backend_db.read_info(plugin_id=plugin_id)
 

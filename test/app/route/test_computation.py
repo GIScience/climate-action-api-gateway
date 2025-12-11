@@ -23,6 +23,7 @@ def test_computation_status_success(mocked_client, default_plugin, default_aoi_p
     correlation_uuid = uuid.uuid4()
     with patch('api_gateway.app.route.plugin.uuid.uuid4', return_value=correlation_uuid):
         response = mocked_client.post('/plugin/test_plugin', json={'aoi': default_aoi_pure_dict, 'params': {'id': 1}})
+        response.raise_for_status()
         result = AsyncResult(id=str(correlation_uuid), backend=default_plugin.backend)
         _ = result.get(5)
 
