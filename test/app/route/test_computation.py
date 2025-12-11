@@ -28,7 +28,7 @@ def test_computation_status_success(mocked_client, default_plugin, default_aoi_p
 
     response = mocked_client.get(f'/computation/{correlation_uuid}/state')
     assert response.status_code == 200
-    assert response.json() == {'state': ComputationState.SUCCESS.value, 'message': ''}
+    assert response.json() == {'state': ComputationState.SUCCESS, 'message': ''}
 
 
 def test_computation_status_revoked_q_time_exceeded(mocked_client, general_uuid, default_aoi_pure_dict, default_plugin):
@@ -39,7 +39,7 @@ def test_computation_status_revoked_q_time_exceeded(mocked_client, general_uuid,
 
     assert response.status_code == 200
     assert response.json() == {
-        'state': ComputationState.REVOKED.value,
+        'state': ComputationState.REVOKED,
         'message': 'The task has been canceled due to high server load, please retry.',
     }
 
@@ -53,6 +53,6 @@ def test_computation_status_message_on_wrong_input(mocked_client, general_uuid, 
 
     assert response.status_code == 200
     assert response.json() == {
-        'state': ComputationState.FAILURE.value,
+        'state': ComputationState.FAILURE,
         'message': "ID: Field required. You provided: {'wrong': True}.",
     }
