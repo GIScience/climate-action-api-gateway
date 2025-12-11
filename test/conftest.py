@@ -16,10 +16,8 @@ from climatoology.app.settings import CABaseSettings
 from climatoology.base.artifact import (
     Artifact,
     ArtifactEnriched,
-    ArtifactMetadata,
     ArtifactModality,
 )
-from climatoology.base.artifact_creators import create_markdown_artifact
 from climatoology.base.baseoperator import AoiProperties, BaseOperator
 from climatoology.base.computation import ComputationInfo, ComputationPluginInfo, ComputationResources, ComputationState
 from climatoology.base.plugin_info import (
@@ -171,18 +169,7 @@ def default_operator(default_info, default_artifact) -> Generator[BaseOperator, 
             params: TestModel,
         ) -> List[Artifact]:
             time.sleep(params.execution_time)
-            artifact_text = (Path(__file__).parent / 'resources/test_purpose.md').read_text()
-            artifact_metadata = ArtifactMetadata(
-                name=default_artifact.name,
-                summary=default_artifact.summary,
-                filename='test_artifact_file',
-            )
-            artifact = create_markdown_artifact(
-                text=artifact_text,
-                metadata=artifact_metadata,
-                resources=resources,
-            )
-            return [artifact]
+            return [default_artifact]
 
     yield TestOperator()
 
