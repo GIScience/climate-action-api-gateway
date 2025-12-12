@@ -59,7 +59,12 @@ def fetch_metadata(correlation_uuid: UUID, request: Request) -> ComputationInfo:
 )
 @cache(expire=cache_ttl(60))
 def list_artifacts(correlation_uuid: UUID, request: Request) -> List[Artifact]:
-    return request.app.state.platform.backend_db.list_artifacts(correlation_uuid=correlation_uuid)
+    artifact_list = request.app.state.platform.backend_db.list_artifacts(correlation_uuid=correlation_uuid)
+
+    if artifact_list is None:
+        raise HTTPException(status_code=404, detail=f'The requested run {correlation_uuid} is unknown.')
+
+    return artifact_list
 
 
 @router.get(
