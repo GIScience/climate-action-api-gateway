@@ -106,7 +106,10 @@ def plugin_compute(
             ]
         ),
     ],
-    params: dict,
+    params: Annotated[
+        dict,
+        Body(examples=[{'bool_showcase': True}]),
+    ],
     request: Request,
 ) -> CorrelationIdObject:
     correlation_uuid = uuid.uuid4()
