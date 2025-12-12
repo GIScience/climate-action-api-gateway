@@ -59,8 +59,7 @@ def fetch_metadata(correlation_uuid: UUID, request: Request) -> ComputationInfo:
 )
 @cache(expire=cache_ttl(60))
 def list_artifacts(correlation_uuid: UUID, request: Request) -> List[Artifact]:
-    computation_uuid = request.app.state.platform.backend_db.resolve_computation_id(correlation_uuid)
-    return request.app.state.platform.storage.list_all(correlation_uuid=computation_uuid)
+    return request.app.state.platform.backend_db.list_artifacts(correlation_uuid=correlation_uuid)
 
 
 @router.get(

@@ -1,3 +1,6 @@
+import uuid
+
+import pytest
 from climatoology.base.computation import ComputationState
 
 
@@ -23,6 +26,21 @@ def test_fetch_metadata(mocked_client, deduplicated_uuid, default_computation_in
 
 def test_fetch_metadata_unknown(mocked_client, deduplicated_uuid):
     response = mocked_client.get(f'/store/{deduplicated_uuid}/metadata')
+
+    assert response.status_code == 404
+
+
+def test_fetch_artifact_list(mocked_client, deduplicated_uuid, default_artifact_enriched, backend_with_computations):
+    response = mocked_client.get(f'/store/{deduplicated_uuid}', follow_redirects=False)
+
+    assert response.status_code == 200
+    assert response.json() == [default_artifact_enriched.model_dump(mode='json')]
+
+
+@pytest.mark.skip(reason='Bug in Climatoology')
+def test_fetch_artifact_list_computation_unknown(mocked_client, backend_with_computations):
+    correlation_uuid = uuid.uuid4()
+    response = mocked_client.get(f'/store/{correlation_uuid}', follow_redirects=False)
 
     assert response.status_code == 404
 
