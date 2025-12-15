@@ -88,8 +88,18 @@ To push a new version to the [HeiGIT docker registry](https://repo.heigit.org) r
 docker image push repo.heigit.org/climate-action/api-gateway:devel
 ```
 
-To build a canary version update your `climatoology` dependency declaration to point to the `main` branch and then run
-`docker build --secret id=CI_JOB_TOKEN . --tag repo.heigit.org/climate-action/api-gateway:canary --push` .
+##### Canary
+
+To build a canary version update your `climatoology` dependency declaration to point to the `main` branch and update
+your lock file (`poetry update climatoology`).
+Then run
+
+```shell
+docker build . \
+   --secret id=CI_JOB_TOKEN \
+   --tag repo.heigit.org/climate-action/api-gateway:canary \
+   --push
+```
 
 ### Further Optional Parameters
 

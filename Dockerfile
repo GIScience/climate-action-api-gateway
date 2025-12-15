@@ -18,5 +18,5 @@ COPY README.md ./README.md
 
 RUN poetry install --no-ansi --no-interaction --all-extras --only-root
 
-ENTRYPOINT ["/bin/bash", "-c", "poetry update --without dev,test climatoology && poetry run python ./${PACKAGE_NAME}/app/api.py"]
+ENTRYPOINT exec poetry run python ./${PACKAGE_NAME}/app/api.py
 EXPOSE 8000
