@@ -113,6 +113,7 @@ class CelerySender:
         override_shelf_life: Optional[CacheOverrides] = None,
         task_time_limit: float = None,
         q_time: float = None,
+        is_demo: bool = False,
     ) -> AsyncResult:
         # Warning: task_time_limit is currently untested in the automated testing suite due to testing configuration
         # issues. It was interactively tested at the time of implementation. Note that time limits requires the gevent
@@ -139,6 +140,7 @@ class CelerySender:
             correlation_uuid=correlation_uuid,
             requested_params=params,
             aoi=aoi,
+            is_demo=is_demo,
         )
 
         if deduplicated_correlation_uuid == correlation_uuid:
