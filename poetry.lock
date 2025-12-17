@@ -690,8 +690,8 @@ tqdm = ">=4.66.1,<5.0.0"
 [package.source]
 type = "git"
 url = "ssh://git@gitlab.heigit.org:2022/climate-action/climatoology.git"
-reference = "release-v7"
-resolved_reference = "30120aeb6cafa9cdc0739da70de7926f5cea2046"
+reference = "7.0.0"
+resolved_reference = "7fcb0e33f3de252e683cb709f75caba3f9f80e8e"
 
 [[package]]
 name = "colorama"
@@ -3756,4 +3756,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13.5,<3.14"
-content-hash = "4666f1806f21ef07523868b7f281a0875689f77ba8091b85277526f2e7960d35"
+content-hash = "37db62e36f9bd3dcf249f008739e9b57ee0852f3c185d0122d4bf946da26467d"
