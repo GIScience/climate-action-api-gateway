@@ -1,6 +1,5 @@
 import uuid
 
-import pytest
 from climatoology.base.computation import ComputationState
 
 
@@ -37,7 +36,6 @@ def test_fetch_artifact_list(mocked_client, deduplicated_uuid, default_artifact_
     assert response.json() == [default_artifact_enriched.model_dump(mode='json')]
 
 
-@pytest.mark.skip(reason='Bug in Climatoology')
 def test_fetch_artifact_list_computation_unknown(mocked_client, backend_with_computations):
     correlation_uuid = uuid.uuid4()
     response = mocked_client.get(f'/store/{correlation_uuid}', follow_redirects=False)
