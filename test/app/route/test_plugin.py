@@ -1,7 +1,8 @@
 from unittest.mock import patch
 
 from climatoology.store.database.models.computation import ComputationLookupTable
-from sqlalchemy import select
+from climatoology.store.database.models.info import PluginInfoTable
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 
@@ -12,6 +13,18 @@ def test_list_plugins(mocked_client, default_info_final, default_plugin):
 
     response = response.json()
     assert response == [default_info_final.model_dump(mode='json')]
+
+
+def test_list_plugins_invalid_among_us(mocked_client, default_info_final, default_plugin, default_backend_db):
+    with Session(default_backend_db.engine) as session:
+        session.execute(update(PluginInfoTable).values(demo_config='{}'))
+        session.commit()
+    response = mocked_client.get('/plugin')
+
+    assert response.status_code == 200
+
+    response = response.json()
+    assert response == []
 
 
 def test_get_plugin(mocked_client, default_info_final, default_plugin):
