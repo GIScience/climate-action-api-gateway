@@ -12,6 +12,7 @@ from climatoology.base.plugin_info import PluginInfoFinal
 from climatoology.store.exception import InfoNotReceivedError
 from fastapi import APIRouter, Body, HTTPException
 from fastapi_cache.decorator import cache
+from pydantic import ValidationError
 from starlette.requests import Request
 
 from api_gateway.app.utils import cache_ttl
@@ -47,10 +48,11 @@ async def list_plugins(request: Request) -> List[PluginInfoFinal]:
     for plugin_id in plugin_ids:
         try:
             plugin_info = await get_plugin(plugin_id=plugin_id, request=request)
-            plugin_list.append(plugin_info)
         except HTTPException as e:
             log.warning(f'Plugin {plugin_id} has an open channel but info could not be loaded.', exc_info=e)
             continue
+
+        plugin_list.append(plugin_info)
 
     return plugin_list
 
@@ -65,6 +67,10 @@ async def get_plugin(plugin_id: str, request: Request) -> PluginInfoFinal:
     except VersionMismatchError as e:
         raise HTTPException(
             status_code=500, detail=f'Plugin {plugin_id} is not in a correct state (version mismatch).'
+        ) from e
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=500, detail=f'Plugin info of {plugin_id} is in a broken state in the database.'
         ) from e
 
 

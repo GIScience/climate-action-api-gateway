@@ -31,8 +31,6 @@ from climatoology.base.plugin_info import (
 from climatoology.store.database import migration
 from climatoology.store.database.database import BackendDatabase
 from climatoology.store.object_store import MinioStorage
-from fastapi_cache import FastAPICache
-from fastapi_cache.backends.inmemory import InMemoryBackend
 from freezegun import freeze_time
 from kombu import Exchange, Queue
 from pydantic import BaseModel, Field, HttpUrl
@@ -42,7 +40,6 @@ from semver import Version
 from sqlalchemy import create_engine, text
 from starlette.testclient import TestClient
 
-from api_gateway.app.api import app
 from api_gateway.app.settings import GatewaySettings
 from api_gateway.sender import EXCHANGE_NAME, CelerySender
 
@@ -392,9 +389,10 @@ def alembic_engine(db_with_postgis, set_basic_envs):
 
 @pytest.fixture
 def mocked_client(default_sender) -> Generator[TestClient, None, None]:
+    with patch('fastapi_cache.decorator.cache', lambda *args, **kwargs: lambda f: f):
+        from api_gateway.app.api import app
     app.state.settings = GatewaySettings()
     app.state.platform = default_sender
-    FastAPICache.init(InMemoryBackend())
     client = TestClient(app)
 
     yield client
