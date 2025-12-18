@@ -140,7 +140,7 @@ build_release:
 
 deploy_staging:
   stage: deploy
-  tags: [ k8s ]
+  tags: [ k8s-kta ]
   needs:
     - build_staging
   rules:
