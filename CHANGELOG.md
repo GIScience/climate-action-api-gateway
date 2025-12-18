@@ -9,7 +9,7 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 
 ### Changed
 
-- update `climatoology` to version 7.0.0
+- update `climatoology` to version 7.0.1
 
 ### Added
 
