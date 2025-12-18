@@ -1,22 +1,18 @@
 import uuid
 from typing import List
-from unittest.mock import ANY, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 import shapely
 from celery.exceptions import TaskRevokedError
 from celery.result import AsyncResult
+from climatoology.app.exception import VersionMismatchError
 from climatoology.app.plugin import _create_plugin
-from climatoology.base.artifact import _Artifact
+from climatoology.base.artifact import Artifact
 from climatoology.base.baseoperator import AoiProperties, BaseOperator
-from climatoology.base.computation import ComputationResources
-from climatoology.base.info import _Info
-from climatoology.store.object_store import ComputationInfo
-from climatoology.utility.exception import (
-    ClimatoologyUserError,
-    InputValidationError,
-    VersionMismatchException,
-)
+from climatoology.base.computation import ComputationInfo, ComputationResources
+from climatoology.base.exception import ClimatoologyUserError, InputValidationError
+from climatoology.base.plugin_info import PluginInfo
 from semver import Version
 
 from api_gateway.sender import EXCHANGE_NAME, CacheOverrides, CelerySender
@@ -52,7 +48,7 @@ def test_request_info(default_sender, default_info_final, default_plugin, celery
 
 @patch('climatoology.__version__', Version(1, 0, 0))
 def test_request_info_plugin_version_assert(default_sender, default_info, default_plugin, celery_worker):
-    with pytest.raises(VersionMismatchException, match='Refusing to register plugin.*'):
+    with pytest.raises(VersionMismatchError, match='Refusing to register plugin.*'):
         default_sender.request_info(plugin_id='test_plugin')
 
 
@@ -97,7 +93,7 @@ def test_send_compute(
             'params': {'id': 1, 'name': 'John Doe'},
         },
         task_id=str(general_uuid),
-        routing_key='test_plugin@_',
+        routing_key='test_plugin',
         exchange=EXCHANGE_NAME,
         time_limit=None,
         expires=None,
@@ -133,7 +129,7 @@ def test_send_compute_produces_result(
     frozen_time,
 ):
     expected_computation_info = default_computation_info.model_copy(deep=True)
-    expected_computation_info.artifacts[0].store_id = ANY
+    expected_computation_info.status = None
 
     result = default_sender.send_compute_request(
         plugin_id='test_plugin',
@@ -266,7 +262,7 @@ def test_send_compute_state_receives_ClimatoologyUserError(  # noqa: N802 - allo
     default_backend_db,
 ):
     class TestOperator(BaseOperator[TestModel]):
-        def info(self) -> _Info:
+        def info(self) -> PluginInfo:
             return default_info.model_copy()
 
         def compute(
@@ -275,7 +271,7 @@ def test_send_compute_state_receives_ClimatoologyUserError(  # noqa: N802 - allo
             aoi: shapely.MultiPolygon,
             aoi_properties: AoiProperties,
             params: TestModel,
-        ) -> List[_Artifact]:
+        ) -> List[Artifact]:
             raise ClimatoologyUserError('Error message to store for the user')
 
     operator = TestOperator()
@@ -311,7 +307,7 @@ def test_send_compute_ClimatoologyUserError_is_not_cached(  # noqa: N802
     default_backend_db,
 ):
     class TestOperator(BaseOperator[TestModel]):
-        def info(self) -> _Info:
+        def info(self) -> PluginInfo:
             return default_info.model_copy()
 
         def compute(
@@ -320,7 +316,7 @@ def test_send_compute_ClimatoologyUserError_is_not_cached(  # noqa: N802
             aoi: shapely.MultiPolygon,
             aoi_properties: AoiProperties,
             params: TestModel,
-        ) -> List[_Artifact]:
+        ) -> List[Artifact]:
             raise ClimatoologyUserError('Error message to store for the user')
 
     operator = TestOperator()
@@ -355,9 +351,10 @@ def test_send_compute_artifact_errors_invalidate_cache(
     default_aoi_feature_geojson_pydantic,
     default_sender,
     default_backend_db,
+    general_uuid,
 ):
     class TestOperator(BaseOperator[TestModel]):
-        def info(self) -> _Info:
+        def info(self) -> PluginInfo:
             return default_info.model_copy()
 
         def compute(
@@ -366,7 +363,7 @@ def test_send_compute_artifact_errors_invalidate_cache(
             aoi: shapely.MultiPolygon,
             aoi_properties: AoiProperties,
             params: TestModel,
-        ) -> List[_Artifact]:
+        ) -> List[Artifact]:
             with self.catch_exceptions('failing_indicator', resources):
                 raise ClimatoologyUserError()
 
@@ -380,16 +377,15 @@ def test_send_compute_artifact_errors_invalidate_cache(
         _ = _create_plugin(operator=operator, settings=default_settings)
         celery_worker.reload()
 
-    correlation_uuid = uuid.uuid4()
     result = default_sender.send_compute_request(
         plugin_id='test_plugin',
         aoi=default_aoi_feature_geojson_pydantic,
         params={'id': 1, 'name': 'John Doe'},
-        correlation_uuid=correlation_uuid,
+        correlation_uuid=general_uuid,
     )
     _ = result.get(timeout=5)
 
-    stored_computation_info = default_backend_db.read_computation(correlation_uuid)
+    stored_computation_info = default_backend_db.read_computation(general_uuid)
     assert stored_computation_info.cache_epoch is None
 
 

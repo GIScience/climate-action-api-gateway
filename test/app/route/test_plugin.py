@@ -1,5 +1,9 @@
 from unittest.mock import patch
 
+from climatoology.store.database.models.computation import ComputationLookupTable
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
 
 def test_list_plugins(mocked_client, default_info_final, default_plugin):
     response = mocked_client.get('/plugin')
@@ -45,9 +49,18 @@ def test_plugin_compute(mocked_client, default_plugin, general_uuid, default_aoi
         assert response.json() == {'correlation_uuid': str(general_uuid)}
 
 
-def test_plugin_compute_demo(mocked_client, default_plugin, general_uuid):
+def test_plugin_compute_demo(mocked_client, default_backend_db, default_plugin, general_uuid):
     with patch('api_gateway.app.route.plugin.uuid.uuid4', return_value=general_uuid):
         response = mocked_client.get('/plugin/test_plugin/demo')
 
         assert response.status_code == 200
         assert response.json() == {'correlation_uuid': str(general_uuid)}
+
+        with Session(default_backend_db.engine) as session:
+            is_demo = session.scalar(
+                select(ComputationLookupTable.is_demo).where(
+                    ComputationLookupTable.user_correlation_uuid == general_uuid
+                )
+            )
+            assert isinstance(is_demo, bool)
+            assert is_demo

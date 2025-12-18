@@ -8,19 +8,16 @@ import climatoology
 import geojson_pydantic
 from celery import Celery
 from celery.result import AsyncResult
-from climatoology.app.plugin import extract_plugin_id, generate_plugin_name
-from climatoology.app.settings import CABaseSettings
+from climatoology.app.exception import VersionMismatchError
+from climatoology.app.plugin import extract_plugin_id
+from climatoology.app.settings import EXCHANGE_NAME, CABaseSettings
 from climatoology.base.baseoperator import AoiProperties
-from climatoology.base.info import _Info
+from climatoology.base.plugin_info import PluginInfoFinal
 from climatoology.store.database.database import BackendDatabase
 from climatoology.store.object_store import MinioStorage, Storage
-from climatoology.utility.exception import VersionMismatchException  # TODO: replace with VersionMismatchError
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from semver import Version
 
 log = logging.getLogger(__name__)
-
-EXCHANGE_NAME = 'C.dq2'  # TODO: replace with climatoology.app.settings.EXCHANGE_NAME
 
 
 class CacheOverrides(StrEnum):
@@ -54,7 +51,7 @@ class CelerySender:
         self.backend_db = BackendDatabase(
             connection_string=settings.db_connection_string,
             user_agent=f'CeleryPlatform/{climatoology.__version__}',
-            # assert_db_status=True,  # TODO: uncomment
+            assert_db_status=True,
         )
         self.deduplicate_computations = sender_config.deduplicate_computations
 
@@ -92,13 +89,12 @@ class CelerySender:
 
         return plugins
 
-    def request_info(self, plugin_id: str, ttl: int = 3) -> _Info:
+    def request_info(self, plugin_id: str) -> PluginInfoFinal:
         log.debug(f"Requesting 'info' from {plugin_id}.")
         info_return = self.backend_db.read_info(plugin_id=plugin_id)
 
-        library_version = Version.parse(info_return.library_version)  # TODO: use info_return.library_version directly
-        if self.assert_plugin_version and not library_version.is_compatible(climatoology.__version__):
-            raise VersionMismatchException(
+        if self.assert_plugin_version and not info_return.library_version.is_compatible(climatoology.__version__):
+            raise VersionMismatchError(
                 f'Refusing to register plugin '
                 f'{info_return.name} in version {info_return.version} due to a climatoology library '
                 f'version mismatch. '
@@ -117,6 +113,7 @@ class CelerySender:
         override_shelf_life: Optional[CacheOverrides] = None,
         task_time_limit: float = None,
         q_time: float = None,
+        is_demo: bool = False,
     ) -> AsyncResult:
         # Warning: task_time_limit is currently untested in the automated testing suite due to testing configuration
         # issues. It was interactively tested at the time of implementation. Note that time limits requires the gevent
@@ -124,30 +121,29 @@ class CelerySender:
 
         assert aoi.properties is not None, 'AOI properties are required'
 
-        plugin_info = self.request_info(plugin_id)
-
         match override_shelf_life:
             case CacheOverrides.FOREVER:
                 computation_shelf_life = None
             case CacheOverrides.NEVER:
                 computation_shelf_life = timedelta(0)
             case _:
+                plugin_info = self.request_info(plugin_id)
                 computation_shelf_life = (
                     plugin_info.computation_shelf_life if self.deduplicate_computations else timedelta(0)
                 )
 
         # Register the task now, before it gets queued
+        plugin_key = self.backend_db.read_info_key(plugin_id)
         deduplicated_correlation_uuid = self.backend_db.register_computation(
-            plugin_id=plugin_id,
-            plugin_version=plugin_info.version,
+            plugin_key=plugin_key,
             computation_shelf_life=computation_shelf_life,
             correlation_uuid=correlation_uuid,
             requested_params=params,
             aoi=aoi,
+            is_demo=is_demo,
         )
 
         if deduplicated_correlation_uuid == correlation_uuid:
-            plugin_name = generate_plugin_name(plugin_id)
             return self.celery_app.send_task(
                 name='compute',
                 kwargs={
@@ -155,7 +151,7 @@ class CelerySender:
                     'params': params,
                 },
                 task_id=str(correlation_uuid),
-                routing_key=plugin_name,  # TODO: change to plugin_id in climatoology v7
+                routing_key=plugin_id,
                 exchange=EXCHANGE_NAME,
                 time_limit=task_time_limit,
                 expires=q_time,

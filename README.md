@@ -49,6 +49,11 @@ Of course, you won't see much until you also launch a plugin that can answer you
 You can try the [plugin-blueprint](https://gitlab.heigit.org/climate-action/plugin-blueprint) or any other plugin listed
 in the [infrastructure repository](https://gitlab.heigit.org/climate-action/infrastructure).
 
+#### Database Migration
+
+To migrate the back-end database run `run-alembic.sh` with the respective [Alembic](https://alembic.sqlalchemy.org)
+commands, e.g. `upgrade head`.
+
 ### Testing
 
 We use [pytest](https://pytest.org) as a testing engine.
@@ -61,7 +66,6 @@ To get a coverage report of how much of your code is run during testing, execute
 
 To get a more detailed report including which lines in each file are **not** tested,
 run `poetry run pytest --cov --cov-report term-missing`
-
 
 ### Docker
 
@@ -86,6 +90,19 @@ To push a new version to the [HeiGIT docker registry](https://repo.heigit.org) r
 
 ```shell
 docker image push repo.heigit.org/climate-action/api-gateway:devel
+```
+
+##### Canary
+
+To build a canary version update your `climatoology` dependency declaration to point to the `main` branch and update
+your lock file (`poetry update climatoology`).
+Then run
+
+```shell
+docker build . \
+   --secret id=CI_JOB_TOKEN \
+   --tag repo.heigit.org/climate-action/api-gateway:canary \
+   --push
 ```
 
 ### Further Optional Parameters

@@ -2,13 +2,14 @@ from datetime import timedelta
 from typing import List
 from uuid import UUID
 
-from climatoology.base.artifact import _Artifact
-from climatoology.store.object_store import ComputationInfo
+from climatoology.base.artifact import Artifact
+from climatoology.base.computation import ComputationInfo
 from fastapi import APIRouter, HTTPException
 from fastapi_cache.decorator import cache
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
 
+from api_gateway.app.route.computation import _extract_computation_status
 from api_gateway.app.utils import cache_ttl
 
 router = APIRouter(prefix='/store', tags=['store'])
@@ -42,7 +43,9 @@ def fetch_icon(plugin_id: str, request: Request) -> RedirectResponse:
 @cache(expire=cache_ttl(60))
 def fetch_metadata(correlation_uuid: UUID, request: Request) -> ComputationInfo:
     computation_info = request.app.state.platform.backend_db.read_computation(correlation_uuid=correlation_uuid)
+
     if computation_info:
+        computation_info.status, _ = _extract_computation_status(correlation_uuid, request)
         return computation_info
     else:
         raise HTTPException(status_code=404, detail=f'The requested run {correlation_uuid} is unknown.')
@@ -55,9 +58,13 @@ def fetch_metadata(correlation_uuid: UUID, request: Request) -> ComputationInfo:
     'To receive actual content you need to use the store uuid returned.',
 )
 @cache(expire=cache_ttl(60))
-def list_artifacts(correlation_uuid: UUID, request: Request) -> List[_Artifact]:
-    computation_uuid = request.app.state.platform.backend_db.resolve_computation_id(correlation_uuid)
-    return request.app.state.platform.storage.list_all(correlation_uuid=computation_uuid)
+def list_artifacts(correlation_uuid: UUID, request: Request) -> List[Artifact]:
+    artifact_list = request.app.state.platform.backend_db.list_artifacts(correlation_uuid=correlation_uuid)
+
+    if artifact_list is None:
+        raise HTTPException(status_code=404, detail=f'The requested run {correlation_uuid} is unknown.')
+
+    return artifact_list
 
 
 @router.get(
