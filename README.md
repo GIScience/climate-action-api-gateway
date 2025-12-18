@@ -75,7 +75,7 @@ Images are automatically built and deployed in the [CI-pipeline](.gitlab-ci.yml)
 In case you want to manually build and run locally (e.g. to test a new feature in development), execute
 
 ```shell
-docker build --secret id=CI_JOB_TOKEN . --tag repo.heigit.org/climate-action/api-gateway:devel
+docker build . --tag repo.heigit.org/climate-action/api-gateway:devel
 docker run --env-file .env.base --network=host repo.heigit.org/climate-action/api-gateway:devel
 ```
 
@@ -100,7 +100,6 @@ Then run
 
 ```shell
 docker build . \
-   --secret id=CI_JOB_TOKEN \
    --tag repo.heigit.org/climate-action/api-gateway:canary \
    --push
 ```
