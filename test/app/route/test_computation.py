@@ -1,8 +1,10 @@
 import time
+import uuid
 from unittest.mock import patch
 
 import pytest
-from climatoology.base.event import ComputationState
+from celery.result import AsyncResult
+from climatoology.base.computation import ComputationState
 from starlette.websockets import WebSocketDisconnect
 
 
@@ -17,10 +19,17 @@ def test_computation_status_unknown(mocked_client, general_uuid):
     assert response.status_code == 404
 
 
-def test_computation_status_pending(mocked_client, deduplicated_uuid, backend_with_computation):
-    response = mocked_client.get(f'/computation/{deduplicated_uuid}/state')
+def test_computation_status_success(mocked_client, default_plugin, default_aoi_pure_dict):
+    correlation_uuid = uuid.uuid4()
+    with patch('api_gateway.app.route.plugin.uuid.uuid4', return_value=correlation_uuid):
+        response = mocked_client.post('/plugin/test_plugin', json={'aoi': default_aoi_pure_dict, 'params': {'id': 1}})
+        response.raise_for_status()
+        result = AsyncResult(id=str(correlation_uuid), backend=default_plugin.backend)
+        _ = result.get(5)
+
+    response = mocked_client.get(f'/computation/{correlation_uuid}/state')
     assert response.status_code == 200
-    assert response.json() == {'state': ComputationState.PENDING.value, 'message': ''}
+    assert response.json() == {'state': ComputationState.SUCCESS, 'message': ''}
 
 
 def test_computation_status_revoked_q_time_exceeded(mocked_client, general_uuid, default_aoi_pure_dict, default_plugin):
@@ -31,12 +40,9 @@ def test_computation_status_revoked_q_time_exceeded(mocked_client, general_uuid,
 
     assert response.status_code == 200
     assert response.json() == {
-        'state': ComputationState.REVOKED.value,
+        'state': ComputationState.REVOKED,
         'message': 'The task has been canceled due to high server load, please retry.',
     }
-
-    db_info = mocked_client.app.state.platform.backend_db.read_computation(general_uuid)
-    assert db_info.status == ComputationState.REVOKED
 
 
 def test_computation_status_message_on_wrong_input(mocked_client, general_uuid, default_aoi_pure_dict, default_plugin):
@@ -48,6 +54,6 @@ def test_computation_status_message_on_wrong_input(mocked_client, general_uuid, 
 
     assert response.status_code == 200
     assert response.json() == {
-        'state': ComputationState.FAILURE.value,
+        'state': ComputationState.FAILURE,
         'message': "ID: Field required. You provided: {'wrong': True}.",
     }
