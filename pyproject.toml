@@ -15,7 +15,7 @@ dependencies = [
     "starlette (>=0.50.0,<0.51.0)",
     "uvicorn[standard] (>=0.38.0,<0.39.0)",
     "fastapi-cache2[memcache] (>=0.2.2,<0.3.0)",
-    "climatoology @ git+https://gitlab.heigit.org/climate-action/climatoology.git@7.0.1",
+    "climatoology @ git+https://gitlab.heigit.org/climate-action/climatoology.git@7.0.2",
     "semver (>=3.0.2,<4.0.0)",
     "pydantic (>=2.10.2,<3.0.0)",
     "pydantic-settings (>=2.9.1,<3.0.0)",
