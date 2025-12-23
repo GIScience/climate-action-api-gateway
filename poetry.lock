@@ -691,7 +691,7 @@ tqdm = ">=4.66.1,<5.0.0"
 type = "git"
 url = "https://gitlab.heigit.org/climate-action/climatoology.git"
 reference = "7.0.2"
-resolved_reference = "984317329f6f9ef2db9fe58aef3bd730ba6c9898"
+resolved_reference = "237eeb6535fbeac42b8e6d18efedab75f6e0bae7"
 
 [[package]]
 name = "colorama"
