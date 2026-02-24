@@ -94,6 +94,12 @@ class CelerySender:
         info_return = self.backend_db.read_info(plugin_id=plugin_id)
 
         if self.assert_plugin_version and not info_return.library_version.is_compatible(climatoology.__version__):
+            # This means that feature releases of climatoology must be deployed on the gateway if they want to be used
+            # in the plugins even if they don't impact the relation between the two (e.g. adding a new utility) i.e.
+            # the gateway has to be at the pinnacle of our software stack.
+            # This gives us the freedom to add features to plugins that REQUIRE support from the gateway, as long as the
+            # feature does not impact older plugins.
+            # Because the gateway version dictates the database state, this also ensures that the database is always kept up to date.
             raise VersionMismatchError(
                 f'Refusing to register plugin '
                 f'{info_return.name} in version {info_return.version} due to a climatoology library '
