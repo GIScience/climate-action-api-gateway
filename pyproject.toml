@@ -11,9 +11,9 @@ readme = "README.md"
 
 requires-python = ">=3.13.5,<3.14"
 dependencies = [
-    "fastapi (>=0.128.0,<0.129.0)",
-    "starlette (>=0.50.0,<0.51.0)",
-    "uvicorn[standard] (>=0.40.0,<0.41.0)",
+    "fastapi (>=0.133.0,<0.134.0)",
+    "starlette (>=0.52.1,<0.53.0)",
+    "uvicorn[standard] (>=0.41.0,<0.42.0)",
     "fastapi-cache2[memcache] (>=0.2.2,<0.3.0)",
     "climatoology @ git+https://gitlab.heigit.org/climate-action/climatoology.git@7.0.2",
     "semver (>=3.0.2,<4.0.0)",
