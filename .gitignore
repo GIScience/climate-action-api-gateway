@@ -6,6 +6,7 @@ __pycache__/
 .env.base
 .env.gateway
 .env.sender
+.env.migration
 .coverage
 coverage.xml
 

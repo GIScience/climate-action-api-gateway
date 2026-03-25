@@ -1,4 +1,4 @@
-## API Gateway
+# API Gateway
 
 This package features a REST-API that serves as a gateway between the user realm and the backend of the climate action
 architecture.
@@ -35,9 +35,9 @@ architecture.
 Afterward copy [`.env.base_template`](.env.base_template) to `.env.base` and fill in the necessary environment
 variables.
 
-### Direct run
+### Local run
 
-Start the api
+Follow the [database migration instructions](#database-migrations), then start the api with
 
 ```shell
  poetry run python api_gateway/app/api.py
@@ -49,10 +49,24 @@ Of course, you won't see much until you also launch a plugin that can answer you
 You can try the [plugin-blueprint](https://gitlab.heigit.org/climate-action/plugin-blueprint) or any other plugin listed
 in the [infrastructure repository](https://gitlab.heigit.org/climate-action/infrastructure).
 
-#### Database Migration
+### Database migrations
 
-To migrate the back-end database run `run-alembic.sh` with the respective [Alembic](https://alembic.sqlalchemy.org)
-commands, e.g. `upgrade head`.
+The backend database must have the correct schema, as required by climatoology.
+When running the gateway from the infrastructure repository, the database upgrades will automatically be run.
+Otherwise, use one of the following methods to manually run the migrations.
+
+For more advanced alembic usage and commands, such as how to downgrade your database, see
+the [climatoology documentation](https://gitlab.heigit.org/climate-action/climatoology/-/blob/main/README.md?ref_type=heads#database-migration).
+
+#### Docker
+
+If you have the docker container available,
+run `docker run --env-file .env.base --entrypoint ./run-alembic.sh repo.heigit.org/climate-action/api-gateway:devel upgrade head`
+
+#### Local
+
+To run the database migrations locally, first create a `.env.migration` file containing the database connection
+specification (as per [`.env.base_template`](.env.base_template)), then run `./run-alembic.sh upgrade head`.
 
 ### Testing
 
@@ -107,8 +121,7 @@ docker build . \
 ### Further Optional Parameters
 
 | env var                    | description                                    |
-|----------------------------|------------------------------------------------|
-| MINIO_BUCKET               | the minio bucket to use for storage            |
+| -------------------------- | ---------------------------------------------- |
 | MINIO_SECURE               | set to True to enable SSL in Minio connections |
 | FILE_CACHE                 | location where files are temporarily stored    |
 | API_GATEWAY_APP_CONFIG_DIR | The directory holding configuration files      |
