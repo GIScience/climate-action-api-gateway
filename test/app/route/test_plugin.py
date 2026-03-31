@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
 from climatoology.store.database.models.computation import ComputationLookupTable
-from climatoology.store.database.models.info import PluginInfoTable
+from climatoology.store.database.models.plugin_info import PluginInfoTable
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
