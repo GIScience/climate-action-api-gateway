@@ -33,7 +33,7 @@ unit_tests:
   before_script:
     - python3 -m venv .venv-poetry
     - source .venv-poetry/bin/activate
-    - pip install poetry==2.1.3
+    - pip install poetry==2.3.2
     - poetry config virtualenvs.in-project true
     - poetry install --with dev,test
     - poetry update climatoology # trigger re-fetch from climatoology main branch on plugin development branch
