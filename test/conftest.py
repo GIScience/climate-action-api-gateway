@@ -34,6 +34,7 @@ from climatoology.store.object_store import MinioStorage
 from freezegun import freeze_time
 from kombu import Exchange, Queue
 from pydantic import BaseModel, Field, HttpUrl
+from pydantic_extra_types.language_code import LanguageAlpha2
 from pytest_alembic import Config
 from pytest_postgresql.janitor import DatabaseJanitor
 from semver import Version
@@ -93,7 +94,7 @@ def frozen_time():
 
 @pytest.fixture
 def default_plugin_key(default_info) -> str:
-    return f'{default_info.id};{default_info.version}'
+    return f'{default_info.id}-{default_info.version}-en'
 
 
 @pytest.fixture
@@ -123,8 +124,12 @@ def default_info() -> PluginInfo:
 
 @pytest.fixture
 def default_info_final(default_operator) -> PluginInfoFinal:
+    enriched_info = default_operator.info_enriched
     return PluginInfoFinal(
-        **default_operator.info_enriched.model_dump(exclude={'assets'}, mode='json'),
+        **enriched_info.model_dump(exclude={'assets', 'purpose', 'methodology'}, mode='json'),
+        purpose=enriched_info.purpose['en'],
+        methodology=enriched_info.methodology['en'],
+        language=LanguageAlpha2('en'),
         assets=AssetsFinal(icon='assets/test_plugin/latest/ICON.png'),
     )
 
@@ -240,14 +245,16 @@ def default_computation_info(
     return ComputationInfo(
         correlation_uuid=general_uuid,
         request_ts=datetime(2018, 1, 1, 12),
-        deduplication_key=uuid.UUID('24209215-3397-e96c-2bf2-084116c66532'),
+        deduplication_key=uuid.UUID('412bef28-577e-2aa1-5163-77ec18d1acc6'),
         cache_epoch=17532,
         valid_until=datetime(2018, 1, 2),
         params={'id': 1, 'name': 'John Doe', 'execution_time': 0.0},
         requested_params={'id': 1},
         aoi=default_aoi_feature_geojson_pydantic,
         artifacts=[default_artifact_enriched],
-        plugin_info=ComputationPluginInfo(id=default_info_final.id, version=default_info_final.version),
+        plugin_info=ComputationPluginInfo(
+            id=default_info_final.id, version=default_info_final.version, language=LanguageAlpha2('en')
+        ),
         status=ComputationState.SUCCESS,
     )
 
