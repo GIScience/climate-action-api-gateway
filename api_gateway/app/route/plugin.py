@@ -8,11 +8,12 @@ from uuid import UUID
 import geojson_pydantic
 from climatoology.app.exception import VersionMismatchError
 from climatoology.base.baseoperator import AoiProperties
-from climatoology.base.plugin_info import PluginInfoFinal
+from climatoology.base.plugin_info import DEFAULT_LANGUAGE, PluginInfoFinal
 from climatoology.store.exception import InfoNotReceivedError
 from fastapi import APIRouter, Body, HTTPException
 from fastapi_cache.decorator import cache
 from pydantic import ValidationError
+from pydantic_extra_types.language_code import LanguageAlpha2
 from starlette.requests import Request
 
 from api_gateway.app.utils import cache_ttl
@@ -40,14 +41,14 @@ class CorrelationIdObject:
 
 @router.get(path='', summary='List all currently available plugins.')
 @cache(expire=cache_ttl(60))
-async def list_plugins(request: Request) -> List[PluginInfoFinal]:
+async def list_plugins(request: Request, lang: LanguageAlpha2 = DEFAULT_LANGUAGE) -> List[PluginInfoFinal]:
     plugin_ids = list(request.app.state.platform.list_active_plugins())
     plugin_ids.sort()
 
     plugin_list = []
     for plugin_id in plugin_ids:
         try:
-            plugin_info = await get_plugin(plugin_id=plugin_id, request=request)
+            plugin_info = await get_plugin(plugin_id=plugin_id, lang=lang, request=request)
         except HTTPException as e:
             log.warning(f'Plugin {plugin_id} has an open channel but info could not be loaded.', exc_info=e)
             continue
@@ -59,11 +60,15 @@ async def list_plugins(request: Request) -> List[PluginInfoFinal]:
 
 @router.get(path='/{plugin_id}', summary='Get information on a specific plugin or check its online status.')
 @cache(expire=cache_ttl(60 * 60))
-async def get_plugin(plugin_id: str, request: Request) -> PluginInfoFinal:
+async def get_plugin(plugin_id: str, request: Request, lang: LanguageAlpha2 = DEFAULT_LANGUAGE) -> PluginInfoFinal:
     try:
-        return request.app.state.platform.request_info(plugin_id=plugin_id)
+        return request.app.state.platform.request_info(plugin_id=plugin_id, lang=lang)
     except InfoNotReceivedError as e:
-        raise HTTPException(status_code=404, detail=f'Plugin {plugin_id} does not exist.') from e
+        if lang == DEFAULT_LANGUAGE:
+            raise HTTPException(status_code=404, detail=f'Plugin {plugin_id} does not exist.') from e
+        else:
+            log.debug(f'Plugin {plugin_id} does not exist in language {lang}, returning {DEFAULT_LANGUAGE} instead')
+            return await get_plugin(plugin_id=plugin_id, request=request)
     except VersionMismatchError as e:
         raise HTTPException(
             status_code=500, detail=f'Plugin {plugin_id} is not in a correct state (version mismatch).'
@@ -116,12 +121,14 @@ def plugin_compute(
         Body(examples=[{'bool_showcase': True}]),
     ],
     request: Request,
+    lang: LanguageAlpha2 = DEFAULT_LANGUAGE,
 ) -> CorrelationIdObject:
     correlation_uuid = uuid.uuid4()
     request.app.state.platform.send_compute_request(
         plugin_id=plugin_id,
         aoi=aoi,
         params=params,
+        lang=lang,
         correlation_uuid=correlation_uuid,
         task_time_limit=request.app.state.settings.computation_time_limit,
         q_time=request.app.state.settings.computation_queue_time,
@@ -136,7 +143,7 @@ def plugin_compute(
     'functionality.',
 )
 @cache(expire=cache_ttl(3))
-async def plugin_demo(plugin_id: str, request: Request) -> CorrelationIdObject:
+async def plugin_demo(plugin_id: str, request: Request, lang: LanguageAlpha2 = DEFAULT_LANGUAGE) -> CorrelationIdObject:
     correlation_uuid = uuid.uuid4()
     info = await get_plugin(plugin_id, request)
 
@@ -155,5 +162,6 @@ async def plugin_demo(plugin_id: str, request: Request) -> CorrelationIdObject:
         correlation_uuid=correlation_uuid,
         override_shelf_life=CacheOverrides.FOREVER,
         is_demo=True,
+        lang=lang,
     )
     return CorrelationIdObject(correlation_uuid)

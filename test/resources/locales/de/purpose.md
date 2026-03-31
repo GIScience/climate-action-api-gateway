@@ -1,0 +1,1 @@
+Das Ziel dieser Komponente
