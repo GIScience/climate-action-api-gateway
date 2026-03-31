@@ -20,7 +20,9 @@ from climatoology.base.artifact import (
 )
 from climatoology.base.baseoperator import AoiProperties, BaseOperator
 from climatoology.base.computation import ComputationInfo, ComputationPluginInfo, ComputationResources, ComputationState
+from climatoology.base.i18n import N_
 from climatoology.base.plugin_info import (
+    DEFAULT_LANGUAGE,
     AssetsFinal,
     Concern,
     PluginAuthor,
@@ -34,7 +36,6 @@ from climatoology.store.object_store import MinioStorage
 from freezegun import freeze_time
 from kombu import Exchange, Queue
 from pydantic import BaseModel, Field, HttpUrl
-from pydantic_extra_types.language_code import LanguageAlpha2
 from pytest_alembic import Config
 from pytest_postgresql.janitor import DatabaseJanitor
 from semver import Version
@@ -93,8 +94,8 @@ def frozen_time():
 
 
 @pytest.fixture
-def default_plugin_key(default_info) -> str:
-    return f'{default_info.id}-{default_info.version}-en'
+def default_plugin_key(default_info_final) -> str:
+    return f'{default_info_final.id}-{default_info_final.version}-{default_info_final.language}'
 
 
 @pytest.fixture
@@ -110,9 +111,8 @@ def default_info() -> PluginInfo:
         ],
         icon=Path(__file__).parent / 'resources/test_icon.jpeg',
         concerns={Concern.CLIMATE_ACTION__GHG_EMISSION},
-        teaser='This plugin does nothing and that is good.',
-        purpose=Path(__file__).parent / 'resources/test_purpose.md',
-        methodology=Path(__file__).parent / 'resources/test_methodology.md',
+        teaser=N_('This plugin does nothing and that is good.'),
+        localisation_directory=Path(__file__).parent / 'resources/locales',
         sources_library=Path(__file__).parent / 'resources/test.bib',
         info_source_keys={'test2023'},
         demo_input_parameters=TestModel(id=1),
@@ -124,13 +124,15 @@ def default_info() -> PluginInfo:
 
 @pytest.fixture
 def default_info_final(default_operator) -> PluginInfoFinal:
-    enriched_info = default_operator.info_enriched
     return PluginInfoFinal(
-        **enriched_info.model_dump(exclude={'assets', 'purpose', 'methodology'}, mode='json'),
-        purpose=enriched_info.purpose['en'],
-        methodology=enriched_info.methodology['en'],
-        language=LanguageAlpha2('en'),
+        **default_operator.info_enriched.model_dump(
+            exclude={'assets', 'teaser', 'purpose', 'methodology'}, mode='json'
+        ),
         assets=AssetsFinal(icon='assets/test_plugin/latest/ICON.png'),
+        teaser=default_operator.info_enriched.teaser,
+        purpose=default_operator.info_enriched.purpose['en'],
+        methodology=default_operator.info_enriched.methodology['en'],
+        language=DEFAULT_LANGUAGE,
     )
 
 
@@ -253,7 +255,7 @@ def default_computation_info(
         aoi=default_aoi_feature_geojson_pydantic,
         artifacts=[default_artifact_enriched],
         plugin_info=ComputationPluginInfo(
-            id=default_info_final.id, version=default_info_final.version, language=LanguageAlpha2('en')
+            id=default_info_final.id, version=default_info_final.version, language=default_info_final.language
         ),
         status=ComputationState.SUCCESS,
     )

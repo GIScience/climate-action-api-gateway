@@ -12,9 +12,10 @@ from climatoology.app.exception import VersionMismatchError
 from climatoology.app.plugin import extract_plugin_id
 from climatoology.app.settings import EXCHANGE_NAME, CABaseSettings
 from climatoology.base.baseoperator import AoiProperties
-from climatoology.base.plugin_info import PluginInfoFinal
+from climatoology.base.plugin_info import DEFAULT_LANGUAGE, PluginInfoFinal
 from climatoology.store.database.database import BackendDatabase
 from climatoology.store.object_store import MinioStorage, Storage
+from pydantic_extra_types.language_code import LanguageAlpha2
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 log = logging.getLogger(__name__)
@@ -89,9 +90,9 @@ class CelerySender:
 
         return plugins
 
-    def request_info(self, plugin_id: str) -> PluginInfoFinal:
+    def request_info(self, plugin_id: str, lang: LanguageAlpha2 = DEFAULT_LANGUAGE) -> PluginInfoFinal:
         log.debug(f"Requesting 'info' from {plugin_id}.")
-        info_return = self.backend_db.read_info(plugin_id=plugin_id)
+        info_return = self.backend_db.read_info(plugin_id=plugin_id, language=lang)
 
         if self.assert_plugin_version and not info_return.library_version.is_compatible(climatoology.__version__):
             # This means that feature releases of climatoology must be deployed on the gateway if they want to be used
@@ -116,6 +117,7 @@ class CelerySender:
         aoi: geojson_pydantic.Feature[geojson_pydantic.MultiPolygon, AoiProperties],
         params: dict,
         correlation_uuid: UUID,
+        lang: LanguageAlpha2 = DEFAULT_LANGUAGE,
         override_shelf_life: Optional[CacheOverrides] = None,
         task_time_limit: float = None,
         q_time: float = None,
@@ -152,10 +154,7 @@ class CelerySender:
         if deduplicated_correlation_uuid == correlation_uuid:
             return self.celery_app.send_task(
                 name='compute',
-                kwargs={
-                    'aoi': aoi.model_dump(mode='json'),
-                    'params': params,
-                },
+                kwargs={'aoi': aoi.model_dump(mode='json'), 'params': params, 'lang': lang},
                 task_id=str(correlation_uuid),
                 routing_key=plugin_id,
                 exchange=EXCHANGE_NAME,

@@ -1,0 +1,25 @@
+# German translations for test_plugin.
+# Copyright (C) 2026 HeiGIT gGmbH
+# This file is distributed under the same license as the test_plugin
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: test_plugin VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-03-27 14:05+0100\n"
+"PO-Revision-Date: 2026-03-27 14:06+0100\n"
+"Last-Translator: \n"
+"Language-Team: de <LL@li.org>\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Generated-By: Babel 2.10.3\n"
+"X-Generator: Poedit 3.9\n"
+
+#: test/conftest.py:114
+msgid "This plugin does nothing and that is good."
+msgstr "Eine Vorschau auf eine Testkomponente."

@@ -7,6 +7,10 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 
 ## [Unreleased](https://gitlab.heigit.org/climate-action/api-gateway/-/compare/2.4.1...main)
 
+### Added
+
+- multi language support added by climatoology v7.1
+
 ## [2.4.1](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.4.1) - 2026-03-11
 
 ### Changed

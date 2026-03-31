@@ -91,6 +91,7 @@ def test_send_compute(
                 },
             },
             'params': {'id': 1, 'name': 'John Doe'},
+            'lang': 'en',
         },
         task_id=str(general_uuid),
         routing_key='test_plugin',

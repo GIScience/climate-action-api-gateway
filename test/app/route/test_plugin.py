@@ -15,6 +15,35 @@ def test_list_plugins(mocked_client, default_info_final, default_plugin):
     assert response == [default_info_final.model_dump(mode='json')]
 
 
+def test_list_plugins_lang(mocked_client, default_info_final, default_plugin):
+    response = mocked_client.get('/plugin', params={'lang': 'de'})
+
+    assert response.status_code == 200
+
+    response = response.json()
+
+    de_info = default_info_final.model_copy(
+        deep=True,
+        update={
+            'language': 'de',
+            'teaser': 'Eine Vorschau auf eine Testkomponente.',
+            'methodology': 'Dies ist eine Testbasis',
+            'purpose': 'Das Ziel dieser Komponente',
+        },
+    )
+    assert response == [de_info.model_dump(mode='json')]
+
+
+def test_list_plugins_unknown_lang(mocked_client, default_info_final, default_plugin):
+    response = mocked_client.get('/plugin', params={'lang': 'aa'})
+
+    assert response.status_code == 200
+
+    response = response.json()
+
+    assert response == [default_info_final.model_dump(mode='json')]
+
+
 def test_list_plugins_invalid_among_us(mocked_client, default_info_final, default_plugin, default_backend_db):
     with Session(default_backend_db.engine) as session:
         session.execute(update(PluginInfoTable).values(demo_config='{}'))
@@ -34,6 +63,32 @@ def test_get_plugin(mocked_client, default_info_final, default_plugin):
 
     response = response.json()
     assert response == default_info_final.model_dump(mode='json')
+
+
+def test_get_plugin_by_language(mocked_client, default_info_final, default_plugin):
+    response = mocked_client.get('/plugin/test_plugin', params={'lang': 'de'})
+
+    assert response.status_code == 200
+
+    response = response.json()
+
+    de_info = default_info_final.model_copy(
+        deep=True,
+        update={
+            'language': 'de',
+            'teaser': 'Eine Vorschau auf eine Testkomponente.',
+            'methodology': 'Dies ist eine Testbasis',
+            'purpose': 'Das Ziel dieser Komponente',
+        },
+    )
+    assert response == de_info.model_dump(mode='json')
+
+
+def test_get_plugin_by_language_unknonwn(mocked_client, default_info_final, default_plugin):
+    response = mocked_client.get('/plugin/test_plugin', params={'lang': 'aa'}, follow_redirects=False)
+
+    assert response.status_code == 200
+    assert response.json() == default_info_final.model_dump(mode='json')
 
 
 def test_get_plugin_status_online(mocked_client, default_plugin):
