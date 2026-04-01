@@ -13,7 +13,7 @@ requires-python = ">=3.13.5,<3.14"
 dependencies = [
     "fastapi (>=0.135.1,<0.136.0)",
     "starlette (>=0.52.1,<0.53.0)",
-    "uvicorn[standard] (>=0.41.0,<0.42.0)",
+    "uvicorn[standard] (>=0.42.0,<0.43.0)",
     "fastapi-cache2[memcache] (>=0.2.2,<0.3.0)",
     "climatoology @ git+https://gitlab.heigit.org/climate-action/climatoology.git@7.1.1",
     "semver (>=3.0.2,<4.0.0)",
@@ -27,7 +27,7 @@ repository = "https://gitlab.heigit.org/climate-action/api-gateway"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^4.0.1"
-celery-types = "^0.24.0"
+celery-types = "^0.26.0"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^9.0.0"
