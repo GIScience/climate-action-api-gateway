@@ -39,7 +39,7 @@ unit_tests:
     - poetry update climatoology # trigger re-fetch from climatoology main branch on plugin development branch
   script:
     - poetry run pre-commit run --all-files
-    - poetry run pytest --cov --cov-report term --cov-report xml:coverage.xml
+    - poetry run pytest -x --cov --cov-report term --cov-report xml:coverage.xml
   coverage: '/TOTAL.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
   artifacts:
     reports:
@@ -48,7 +48,6 @@ unit_tests:
         path: coverage.xml
     paths:
       - coverage.xml
-
 
 test_coverage:
   stage: test-coverage
@@ -134,7 +133,6 @@ build_release:
         --tag ${REGISTRY_URL}/${GROUP_NAME}/${CI_PROJECT_NAME}:${CI_COMMIT_TAG} \
         --push \
         .
-
 
 deploy_staging:
   stage: deploy

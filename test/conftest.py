@@ -282,11 +282,18 @@ def celery_worker_parameters():
 
 
 @pytest.fixture
-def celery_app(celery_app):
+def celery_app(celery_app, default_settings):
     # Add queue to the base celery_app, so the platform also knows about it (because we aren't running rabbitmq for real)
-    compute_queue = Queue('test_plugin', Exchange(EXCHANGE_NAME), 'test_plugin')
+    compute_queue = Queue(
+        name='test_plugin',
+        exchange=Exchange(EXCHANGE_NAME),
+        routing_key='test_plugin',
+        queue_arguments={
+            'x-dead-letter-exchange': default_settings.deadletter_exchange_name,
+            'x-dead-letter-routing-key': default_settings.deadletter_channel_name,
+        },
+    )
     celery_app.amqp.queues.select_add(compute_queue)
-
     yield celery_app
 
 
