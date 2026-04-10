@@ -10,6 +10,9 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 ### Added
 
 - multi language support added by climatoology v7.1
+- `dlq_handler`, a script to launch a celery worker that handles the dead letter queue (which is defined in
+  climatoology). Run this handler alongside the gateway to mark tasks in the dead letter queue as `REVOKED` in the
+  celery backend ([43](https://gitlab.heigit.org/climate-action/api-gateway/-/issues/43))
 
 ## [2.4.1](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.4.1) - 2026-03-11
 

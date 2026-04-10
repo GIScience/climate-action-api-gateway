@@ -1,6 +1,5 @@
 import logging
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
 from typing import Any, Tuple
 from uuid import UUID
 
@@ -42,20 +41,7 @@ def _extract_computation_status(correlation_uuid: UUID, request: Request) -> Tup
         db_computations = request.app.state.platform.backend_db.read_computation(computation_uuid)
         if db_computations is None:
             raise HTTPException(status_code=404, detail=f'Correlation UUID {correlation_uuid} is unknown.')
-        else:
-            if db_computations.request_ts + timedelta(
-                seconds=request.app.state.settings.computation_queue_time
-            ) < datetime.now(UTC).replace(tzinfo=None):
-                log.warning(
-                    f'Manually resetting the cache time for computation {computation_uuid}. This is a current hack while the dead letter channel is not available.'
-                )
-                request.app.state.platform.backend_db.update_failed_computation(
-                    correlation_uuid=computation_uuid,
-                    failure_message='The task has been canceled due to high server load, please retry.',
-                    cache=False,
-                )
-                state = ComputationState.REVOKED
-                task_result = TaskRevokedError()
+
     return state, task_result
 
 

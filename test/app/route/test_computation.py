@@ -3,6 +3,7 @@ import uuid
 from unittest.mock import patch
 
 import pytest
+from celery.exceptions import TaskRevokedError
 from celery.result import AsyncResult
 from climatoology.base.computation import ComputationState
 from starlette.websockets import WebSocketDisconnect
@@ -36,6 +37,11 @@ def test_computation_status_revoked_q_time_exceeded(mocked_client, general_uuid,
     mocked_client.app.state.settings.computation_queue_time = 0.0
     with patch('api_gateway.app.route.plugin.uuid.uuid4', return_value=general_uuid):
         mocked_client.post('/plugin/test_plugin', json={'aoi': default_aoi_pure_dict, 'params': {'id': 1}})
+
+    # Wait for the task to be processed before we query its state
+    with pytest.raises(TaskRevokedError):
+        AsyncResult(id=str(general_uuid)).get(timeout=5)
+
     response = mocked_client.get(f'/computation/{general_uuid}/state')
 
     assert response.status_code == 200
