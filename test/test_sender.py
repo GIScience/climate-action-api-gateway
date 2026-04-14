@@ -12,7 +12,7 @@ from climatoology.base.artifact import Artifact
 from climatoology.base.baseoperator import AoiProperties, BaseOperator
 from climatoology.base.computation import ComputationInfo, ComputationResources
 from climatoology.base.exception import ClimatoologyUserError, InputValidationError
-from climatoology.base.plugin_info import PluginInfo
+from climatoology.base.plugin_info import DEFAULT_LANGUAGE, PluginInfo
 from semver import Version
 
 from api_gateway.sender import EXCHANGE_NAME, CacheOverrides, CelerySender
@@ -91,7 +91,7 @@ def test_send_compute(
                 },
             },
             'params': {'id': 1, 'name': 'John Doe'},
-            'lang': 'en',
+            'lang': DEFAULT_LANGUAGE,
         },
         task_id=str(general_uuid),
         routing_key='test_plugin',

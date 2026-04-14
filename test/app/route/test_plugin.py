@@ -1,6 +1,8 @@
 from unittest.mock import patch
 
-from climatoology.store.database.models.computation import ComputationLookupTable
+import pytest
+from climatoology.base.plugin_info import DEFAULT_LANGUAGE
+from climatoology.store.database.models.computation import ComputationLookupTable, ComputationTable
 from climatoology.store.database.models.plugin_info import PluginInfoTable
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
@@ -109,26 +111,62 @@ def test_get_plugin_status_offline(mocked_client):
     assert response == {'status': 'offline'}
 
 
-def test_plugin_compute(mocked_client, default_plugin, general_uuid, default_aoi_pure_dict):
+@pytest.mark.parametrize(
+    'request_lang,computation_lang',
+    [(None, DEFAULT_LANGUAGE), (DEFAULT_LANGUAGE, DEFAULT_LANGUAGE), ('de', 'de'), ('aa', DEFAULT_LANGUAGE)],
+)
+def test_plugin_compute(
+    mocked_client,
+    default_plugin,
+    general_uuid,
+    default_aoi_pure_dict,
+    default_backend_db,
+    request_lang,
+    computation_lang,
+):
+    params = dict()
+    if request_lang:
+        params = params | {'lang': request_lang}
+
     with patch('api_gateway.app.route.plugin.uuid.uuid4', return_value=general_uuid):
-        response = mocked_client.post('/plugin/test_plugin', json={'aoi': default_aoi_pure_dict, 'params': dict()})
+        response = mocked_client.post(
+            '/plugin/test_plugin', json={'aoi': default_aoi_pure_dict, 'params': dict()}, params=params
+        )
 
         assert response.status_code == 200
         assert response.json() == {'correlation_uuid': str(general_uuid)}
 
+    with Session(default_backend_db.engine) as session:
+        language = session.scalar(
+            select(ComputationTable.language)
+            .join(ComputationLookupTable)
+            .where(ComputationLookupTable.user_correlation_uuid == general_uuid)
+        )
+        assert language == computation_lang
 
-def test_plugin_compute_demo(mocked_client, default_backend_db, default_plugin, general_uuid):
+
+@pytest.mark.parametrize(
+    'request_lang,computation_lang',
+    [(None, DEFAULT_LANGUAGE), (DEFAULT_LANGUAGE, DEFAULT_LANGUAGE), ('de', 'de'), ('aa', DEFAULT_LANGUAGE)],
+)
+def test_plugin_compute_demo(
+    mocked_client, default_backend_db, default_plugin, general_uuid, request_lang, computation_lang
+):
+    params = dict()
+    if request_lang:
+        params = params | {'lang': request_lang}
+
     with patch('api_gateway.app.route.plugin.uuid.uuid4', return_value=general_uuid):
-        response = mocked_client.get('/plugin/test_plugin/demo')
+        response = mocked_client.get('/plugin/test_plugin/demo', params=params)
 
         assert response.status_code == 200
         assert response.json() == {'correlation_uuid': str(general_uuid)}
 
         with Session(default_backend_db.engine) as session:
-            is_demo = session.scalar(
-                select(ComputationLookupTable.is_demo).where(
-                    ComputationLookupTable.user_correlation_uuid == general_uuid
-                )
-            )
-            assert isinstance(is_demo, bool)
-            assert is_demo
+            demo_atts = session.execute(
+                select(ComputationTable.language, ComputationLookupTable.is_demo)
+                .join(ComputationLookupTable)
+                .where(ComputationLookupTable.user_correlation_uuid == general_uuid)
+            ).all()
+
+            assert demo_atts == [(computation_lang, True)]

@@ -124,15 +124,20 @@ def plugin_compute(
     lang: LanguageAlpha2 = DEFAULT_LANGUAGE,
 ) -> CorrelationIdObject:
     correlation_uuid = uuid.uuid4()
-    request.app.state.platform.send_compute_request(
-        plugin_id=plugin_id,
-        aoi=aoi,
-        params=params,
-        lang=lang,
-        correlation_uuid=correlation_uuid,
-        task_time_limit=request.app.state.settings.computation_time_limit,
-        q_time=request.app.state.settings.computation_queue_time,
-    )
+    try:
+        request.app.state.platform.send_compute_request(
+            plugin_id=plugin_id,
+            aoi=aoi,
+            params=params,
+            lang=lang,
+            correlation_uuid=correlation_uuid,
+            task_time_limit=request.app.state.settings.computation_time_limit,
+            q_time=request.app.state.settings.computation_queue_time,
+        )
+    except InfoNotReceivedError as e:
+        raise HTTPException(
+            status_code=404, detail=f'Plugin {plugin_id} does not exist in {lang} or {DEFAULT_LANGUAGE}.'
+        ) from e
     return CorrelationIdObject(correlation_uuid)
 
 
