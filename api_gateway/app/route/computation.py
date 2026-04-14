@@ -7,10 +7,9 @@ from celery.exceptions import TaskRevokedError, TimeLimitExceeded
 from celery.result import AsyncResult
 from climatoology.base.computation import ComputationState
 from climatoology.base.exception import ClimatoologyUserError, InputValidationError
-from fastapi import APIRouter, HTTPException, WebSocketException
+from fastapi import APIRouter, HTTPException
 from fastapi_cache.decorator import cache
 from starlette.requests import Request
-from starlette.websockets import WebSocket
 
 from api_gateway.app.utils import cache_ttl
 
@@ -23,12 +22,6 @@ router = APIRouter(prefix='/computation', tags=['computation'])
 class ComputationStateInfo:
     state: ComputationState
     message: str = ''
-
-
-@router.websocket(path='/{correlation_uuid}')
-async def subscribe_compute_status(websocket: WebSocket, correlation_uuid: UUID) -> None:
-    log.debug(f'Received websocket request for {correlation_uuid} using websocket {websocket}')
-    raise WebSocketException(code=1000, reason='Not Implemented')
 
 
 def _extract_computation_status(correlation_uuid: UUID, request: Request) -> Tuple[ComputationState, Exception | Any]:

@@ -8,16 +8,10 @@ Result retrieval is bound to these ids in a two-step procedure:
 
 1. All results generated through a given id can be listed.
    The list remains empty as long as the computation is not finished or in case it failed.
-2. The listed results (artifacts) provide a `store_uuid` which is a unique identifier for that element.
+2. The listed results (artifacts) provide a `filename` which is a unique identifier for that element.
    The element can then be downloaded in a second API call.
 
 For more information see the API swagger documentation.
-Yet, the swagger documentation interface does not well display the `/computation/` endpoint which provides
-a [WebSocket](https://en.wikipedia.org/wiki/WebSocket): `ws://localhost:8000/computation/` (trailing `/` is mandatory).
-The websocket will provide status updates on computation tasks.
-The optional `correlation_uuid` parameter allows you to filter events by a specific computation request.
-A 3-second heartbeat is required.
-To test the websocket you can use tools like [websockets-cli](https://pypi.org/project/websockets-cli/).
 
 One example for a user realm application is
 the [climate action frontend/web-app](https://gitlab.heigit.org/climate-action/web-app).
@@ -67,6 +61,28 @@ run `docker run --env-file .env.base --entrypoint ./run-alembic.sh repo.heigit.o
 
 To run the database migrations locally, first create a `.env.migration` file containing the database connection
 specification (as per [`.env.base_template`](.env.base_template)), then run `./run-alembic.sh upgrade head`.
+
+### Managing expired tasks (DLQ)
+
+We use [celery](https://docs.celeryq.dev/en/main/index.html) as a task management system.
+The gateway sends computation requests to a specific queue per plugin, while each plugin then consumes tasks from that
+queue.
+
+Computation requests may be sent with a `q_time` limit, which determines how long a task can wait in queue without
+being started.
+If a computation request is not started within the
+`q_time`, [RabbitMQ will automatically move that task](https://www.rabbitmq.com/docs/dlx#overview) to the dead letter
+queue (DLQ), without alerting celery.
+Therefore, we need a 'DLQ handler' to ensure that computations that end up in the DLQ are marked in the backend as
+`REVOKED`.
+This handler is provided in [dlq_handler.py](./api_gateway/dlq_handler.py).
+
+When running the gateway from the infrastructure repository, the DLQ handler will automatically be started.
+Otherwise, if you require the DLQ handler, use the following command to start it:
+
+```shell
+poetry run python ./api_gateway/dlq_handler.py
+```
 
 ### Testing
 
