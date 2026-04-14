@@ -130,8 +130,8 @@ def default_info_final(default_operator) -> PluginInfoFinal:
         ),
         assets=AssetsFinal(icon='assets/test_plugin/latest/ICON.png'),
         teaser=default_operator.info_enriched.teaser,
-        purpose=default_operator.info_enriched.purpose['en'],
-        methodology=default_operator.info_enriched.methodology['en'],
+        purpose=default_operator.info_enriched.purpose[DEFAULT_LANGUAGE],
+        methodology=default_operator.info_enriched.methodology[DEFAULT_LANGUAGE],
         language=DEFAULT_LANGUAGE,
     )
 
@@ -152,6 +152,7 @@ def default_artifact_enriched(default_artifact, general_uuid) -> ArtifactEnriche
 
 
 class TestModel(BaseModel):
+    __test__ = False
     id: int = Field(title='ID', description='A required integer parameter.', examples=[1])
     name: str = Field(
         title='Name', description='An optional name parameter.', examples=['John Doe'], default='John Doe'

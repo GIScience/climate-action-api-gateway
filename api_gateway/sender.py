@@ -14,6 +14,7 @@ from climatoology.app.settings import EXCHANGE_NAME, CABaseSettings
 from climatoology.base.baseoperator import AoiProperties
 from climatoology.base.plugin_info import DEFAULT_LANGUAGE, PluginInfoFinal
 from climatoology.store.database.database import BackendDatabase
+from climatoology.store.exception import InfoNotReceivedError
 from climatoology.store.object_store import MinioStorage, Storage
 from pydantic_extra_types.language_code import LanguageAlpha2
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -140,8 +141,25 @@ class CelerySender:
                     plugin_info.computation_shelf_life if self.deduplicate_computations else timedelta(0)
                 )
 
+        plugin_key = self.backend_db.read_info_key(plugin_id=plugin_id, language=lang)
+        if plugin_key is None:
+            if lang == DEFAULT_LANGUAGE:
+                raise InfoNotReceivedError(
+                    f'Plugin {plugin_id} not available in requested language or {DEFAULT_LANGUAGE}'
+                )
+            return self.send_compute_request(
+                plugin_id=plugin_id,
+                aoi=aoi,
+                params=params,
+                correlation_uuid=correlation_uuid,
+                lang=DEFAULT_LANGUAGE,
+                override_shelf_life=override_shelf_life,
+                task_time_limit=task_time_limit,
+                q_time=q_time,
+                is_demo=is_demo,
+            )
+
         # Register the task now, before it gets queued
-        plugin_key = self.backend_db.read_info_key(plugin_id)
         deduplicated_correlation_uuid = self.backend_db.register_computation(
             plugin_key=plugin_key,
             computation_shelf_life=computation_shelf_life,
@@ -149,6 +167,7 @@ class CelerySender:
             requested_params=params,
             aoi=aoi,
             is_demo=is_demo,
+            language=lang,
         )
 
         if deduplicated_correlation_uuid == correlation_uuid:
