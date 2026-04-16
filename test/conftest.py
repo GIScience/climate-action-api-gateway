@@ -8,7 +8,6 @@ from unittest.mock import patch
 
 import geojson_pydantic
 import pytest
-import shapely
 import sqlalchemy
 from celery import Celery
 from climatoology.app.plugin import _create_plugin
@@ -19,7 +18,7 @@ from climatoology.base.artifact import (
     ArtifactModality,
 )
 from climatoology.base.baseoperator import AoiProperties, BaseOperator
-from climatoology.base.computation import ComputationInfo, ComputationPluginInfo, ComputationResources, ComputationState
+from climatoology.base.computation import ComputationInfo, ComputationPluginInfo, ComputationState
 from climatoology.base.i18n import N_
 from climatoology.base.plugin_info import (
     DEFAULT_LANGUAGE,
@@ -171,13 +170,7 @@ def default_operator(default_info, default_artifact) -> Generator[BaseOperator, 
         def info(self) -> PluginInfo:
             return default_info.model_copy(deep=True)
 
-        def compute(
-            self,
-            resources: ComputationResources,
-            aoi: shapely.MultiPolygon,
-            aoi_properties: AoiProperties,
-            params: TestModel,
-        ) -> List[Artifact]:
+        def compute(self, params: TestModel, **kwargs) -> List[Artifact]:
             time.sleep(params.execution_time)
             return [default_artifact]
 

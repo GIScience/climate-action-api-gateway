@@ -3,13 +3,12 @@ from typing import List
 from unittest.mock import Mock, patch
 
 import pytest
-import shapely
 from celery.exceptions import TaskRevokedError
 from celery.result import AsyncResult
 from climatoology.app.exception import VersionMismatchError
 from climatoology.app.plugin import _create_plugin
 from climatoology.base.artifact import Artifact
-from climatoology.base.baseoperator import AoiProperties, BaseOperator
+from climatoology.base.baseoperator import BaseOperator
 from climatoology.base.computation import ComputationInfo, ComputationResources
 from climatoology.base.exception import ClimatoologyUserError, InputValidationError
 from climatoology.base.plugin_info import DEFAULT_LANGUAGE, PluginInfo
@@ -266,13 +265,7 @@ def test_send_compute_state_receives_ClimatoologyUserError(  # noqa: N802 - allo
         def info(self) -> PluginInfo:
             return default_info.model_copy()
 
-        def compute(
-            self,
-            resources: ComputationResources,
-            aoi: shapely.MultiPolygon,
-            aoi_properties: AoiProperties,
-            params: TestModel,
-        ) -> List[Artifact]:
+        def compute(self, **kwargs) -> List[Artifact]:
             raise ClimatoologyUserError('Error message to store for the user')
 
     operator = TestOperator()
@@ -311,13 +304,7 @@ def test_send_compute_ClimatoologyUserError_is_not_cached(  # noqa: N802
         def info(self) -> PluginInfo:
             return default_info.model_copy()
 
-        def compute(
-            self,
-            resources: ComputationResources,
-            aoi: shapely.MultiPolygon,
-            aoi_properties: AoiProperties,
-            params: TestModel,
-        ) -> List[Artifact]:
+        def compute(self, **kwargs) -> List[Artifact]:
             raise ClimatoologyUserError('Error message to store for the user')
 
     operator = TestOperator()
@@ -358,13 +345,7 @@ def test_send_compute_artifact_errors_invalidate_cache(
         def info(self) -> PluginInfo:
             return default_info.model_copy()
 
-        def compute(
-            self,
-            resources: ComputationResources,
-            aoi: shapely.MultiPolygon,
-            aoi_properties: AoiProperties,
-            params: TestModel,
-        ) -> List[Artifact]:
+        def compute(self, resources: ComputationResources, **kwargs) -> List[Artifact]:
             with self.catch_exceptions('failing_indicator', resources):
                 raise ClimatoologyUserError()
 
