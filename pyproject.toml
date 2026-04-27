@@ -1,6 +1,6 @@
 [project]
 name = "api-gateway"
-version = "2.4.1"
+version = "2.5.0"
 description = "The api gateway is the main contact point of the climate action architecture und separates the user realm from the backend."
 authors = [
     { name = "Maciej Adamiak", email = "maciej.adamiak@heigit.org" },
