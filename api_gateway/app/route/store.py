@@ -41,7 +41,7 @@ def fetch_icon(plugin_id: str, request: Request) -> RedirectResponse:
     description='The metadata lists a summary of the input parameters and additional info about the computation.',
 )
 @cache(expire=cache_ttl(60))
-def fetch_metadata(correlation_uuid: UUID, request: Request) -> ComputationInfo:
+async def fetch_metadata(correlation_uuid: UUID, request: Request) -> ComputationInfo:
     computation_info = request.app.state.platform.backend_db.read_computation(correlation_uuid=correlation_uuid)
 
     if computation_info:
@@ -58,7 +58,7 @@ def fetch_metadata(correlation_uuid: UUID, request: Request) -> ComputationInfo:
     'To receive actual content you need to use the store uuid returned.',
 )
 @cache(expire=cache_ttl(60))
-def list_artifacts(correlation_uuid: UUID, request: Request) -> List[ArtifactEnriched]:
+async def list_artifacts(correlation_uuid: UUID, request: Request) -> List[ArtifactEnriched]:
     artifact_list = request.app.state.platform.backend_db.list_artifacts(correlation_uuid=correlation_uuid)
 
     if artifact_list is None:

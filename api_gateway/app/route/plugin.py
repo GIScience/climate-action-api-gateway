@@ -50,7 +50,7 @@ async def list_plugins(request: Request, lang: LanguageAlpha2 = DEFAULT_LANGUAGE
 async def get_plugin(plugin_id: str, request: Request, lang: LanguageAlpha2 = DEFAULT_LANGUAGE) -> PluginInfoResponse:
     try:
         info = request.app.state.platform.request_info(plugin_id=plugin_id, lang=lang)
-        plugin_status = get_plugin_status(info.id, request=request)
+        plugin_status = await get_plugin_status(info.id, request=request)
         is_online = True if plugin_status.status == PluginStatus.ONLINE else False
         info_response = PluginInfoResponse(**info.model_dump(), online=is_online)
     except InfoNotReceivedError as e:
@@ -73,7 +73,7 @@ async def get_plugin(plugin_id: str, request: Request, lang: LanguageAlpha2 = DE
 
 @router.get(path='/{plugin_id}/status', summary='Is this plugin online?')
 @cache(expire=cache_ttl(60))
-def get_plugin_status(plugin_id: str, request: Request) -> PluginStatusObject:
+async def get_plugin_status(plugin_id: str, request: Request) -> PluginStatusObject:
     try:
         pong = request.app.state.platform.celery_app.control.inspect().ping()
         pong = [response for key, response in pong.items() if key.startswith(plugin_id)]
@@ -91,7 +91,7 @@ def get_plugin_status(plugin_id: str, request: Request) -> PluginStatusObject:
     'Their input schema can be requested from the /plugin GET methods.',
 )
 @cache(expire=cache_ttl(3))
-def plugin_compute(
+async def plugin_compute(
     plugin_id: str,
     aoi: Annotated[
         geojson_pydantic.Feature[geojson_pydantic.MultiPolygon, AoiProperties],

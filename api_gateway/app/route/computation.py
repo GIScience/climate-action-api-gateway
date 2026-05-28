@@ -45,7 +45,7 @@ def _extract_computation_status(correlation_uuid: UUID, request: Request) -> Tup
     'described here: https://docs.celeryq.dev/en/stable/userguide/tasks.html#built-in-states',
 )
 @cache(expire=cache_ttl(2))
-def get_computation_status(correlation_uuid: UUID, request: Request) -> ComputationStateInfo:
+async def get_computation_status(correlation_uuid: UUID, request: Request) -> ComputationStateInfo:
     state, task_result = _extract_computation_status(correlation_uuid, request)
 
     message = ''
