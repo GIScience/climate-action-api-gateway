@@ -8,7 +8,7 @@ from uuid import UUID
 import geojson_pydantic
 from climatoology.app.exception import VersionMismatchError
 from climatoology.base.baseoperator import AoiProperties
-from climatoology.base.plugin_info import DEFAULT_LANGUAGE, PluginInfoFinal
+from climatoology.base.plugin_info import DEFAULT_LANGUAGE
 from climatoology.store.exception import InfoNotReceivedError
 from fastapi import APIRouter, Body, HTTPException
 from fastapi_cache.decorator import cache
@@ -17,7 +17,7 @@ from pydantic_extra_types.language_code import LanguageAlpha2
 from starlette.requests import Request
 
 from api_gateway.app.utils import cache_ttl
-from api_gateway.sender import CacheOverrides
+from api_gateway.sender import CacheOverrides, PluginInfoResponse
 
 log = logging.getLogger(__name__)
 
@@ -41,34 +41,24 @@ class CorrelationIdObject:
 
 @router.get(path='', summary='List all currently available plugins.')
 @cache(expire=cache_ttl(60))
-async def list_plugins(request: Request, lang: LanguageAlpha2 = DEFAULT_LANGUAGE) -> List[PluginInfoFinal]:
-    plugin_ids = list(request.app.state.platform.list_active_plugins())
-    plugin_ids.sort()
-
-    plugin_list = []
-    for plugin_id in plugin_ids:
-        try:
-            plugin_info = await get_plugin(plugin_id=plugin_id, lang=lang, request=request)
-        except HTTPException as e:
-            log.warning(f'Plugin {plugin_id} has an open channel but info could not be loaded.', exc_info=e)
-            continue
-
-        plugin_list.append(plugin_info)
-
-    return plugin_list
+async def list_plugins(request: Request, lang: LanguageAlpha2 = DEFAULT_LANGUAGE) -> List[PluginInfoResponse]:
+    return request.app.state.platform.list_all_plugins(lang=lang)
 
 
 @router.get(path='/{plugin_id}', summary='Get information on a specific plugin or check its online status.')
 @cache(expire=cache_ttl(60 * 60))
-async def get_plugin(plugin_id: str, request: Request, lang: LanguageAlpha2 = DEFAULT_LANGUAGE) -> PluginInfoFinal:
+async def get_plugin(plugin_id: str, request: Request, lang: LanguageAlpha2 = DEFAULT_LANGUAGE) -> PluginInfoResponse:
     try:
-        return request.app.state.platform.request_info(plugin_id=plugin_id, lang=lang)
+        info = request.app.state.platform.request_info(plugin_id=plugin_id, lang=lang)
+        plugin_status = get_plugin_status(info.id, request=request)
+        is_online = True if plugin_status.status == PluginStatus.ONLINE else False
+        info_response = PluginInfoResponse(**info.model_dump(), online=is_online)
     except InfoNotReceivedError as e:
         if lang == DEFAULT_LANGUAGE:
             raise HTTPException(status_code=404, detail=f'Plugin {plugin_id} does not exist.') from e
         else:
             log.debug(f'Plugin {plugin_id} does not exist in language {lang}, returning {DEFAULT_LANGUAGE} instead')
-            return await get_plugin(plugin_id=plugin_id, request=request)
+            info_response = await get_plugin(plugin_id=plugin_id, request=request)
     except VersionMismatchError as e:
         raise HTTPException(
             status_code=500, detail=f'Plugin {plugin_id} is not in a correct state (version mismatch).'
@@ -77,6 +67,8 @@ async def get_plugin(plugin_id: str, request: Request, lang: LanguageAlpha2 = DE
         raise HTTPException(
             status_code=500, detail=f'Plugin info of {plugin_id} is in a broken state in the database.'
         ) from e
+
+    return info_response
 
 
 @router.get(path='/{plugin_id}/status', summary='Is this plugin online?')

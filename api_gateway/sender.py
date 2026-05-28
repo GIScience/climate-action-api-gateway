@@ -9,15 +9,19 @@ import geojson_pydantic
 from celery import Celery
 from celery.result import AsyncResult
 from climatoology.app.exception import VersionMismatchError
-from climatoology.app.plugin import extract_plugin_id
+from climatoology.app.plugin import PluginInfoTable, extract_plugin_id
 from climatoology.app.settings import EXCHANGE_NAME, CABaseSettings
 from climatoology.base.baseoperator import AoiProperties
 from climatoology.base.plugin_info import DEFAULT_LANGUAGE, PluginInfoFinal
 from climatoology.store.database.database import BackendDatabase
 from climatoology.store.exception import InfoNotReceivedError
 from climatoology.store.object_store import MinioStorage, Storage
+from ordered_set import OrderedSet
+from pydantic import ValidationError
 from pydantic_extra_types.language_code import LanguageAlpha2
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 log = logging.getLogger(__name__)
 
@@ -25,6 +29,10 @@ log = logging.getLogger(__name__)
 class CacheOverrides(StrEnum):
     FOREVER = 'forever-cache'
     NEVER = 'no-cache'
+
+
+class PluginInfoResponse(PluginInfoFinal):
+    online: bool = False
 
 
 class SenderSettings(BaseSettings):
@@ -90,6 +98,38 @@ class CelerySender:
         log.debug(f'Active plugins: {plugins}.')
 
         return plugins
+
+    def list_all_plugins(self, lang: LanguageAlpha2 = DEFAULT_LANGUAGE) -> list[PluginInfoResponse]:
+        """Retrieve a list of all plugins and whether or not they are online."""
+        active_plugins = list(self.list_active_plugins())
+        active_plugins.sort()
+
+        plugin_infos = []
+        collected_info_ids = []
+        with Session(self.backend_db.engine) as session:
+            for info_lang in OrderedSet([lang, DEFAULT_LANGUAGE]):
+                info_query = select(PluginInfoTable).where(
+                    PluginInfoTable.latest,
+                    PluginInfoTable.language == info_lang,
+                    PluginInfoTable.id.not_in(collected_info_ids),
+                )
+                result_scalars = session.scalars(info_query)
+                result = result_scalars.all()
+
+                for info in result:
+                    try:
+                        valid_info = PluginInfoResponse.model_validate(info)
+                    except ValidationError:
+                        log.warning(f'Plugin info of {info.id} is in a broken state in the database.')
+                        continue
+
+                    if info.id in active_plugins:
+                        valid_info.online = True
+
+                    plugin_infos.append(valid_info)
+                    collected_info_ids.append(info.id)
+
+        return plugin_infos
 
     def request_info(self, plugin_id: str, lang: LanguageAlpha2 = DEFAULT_LANGUAGE) -> PluginInfoFinal:
         log.debug(f"Requesting 'info' from {plugin_id}.")

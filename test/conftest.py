@@ -42,7 +42,7 @@ from sqlalchemy import create_engine, text
 from starlette.testclient import TestClient
 
 from api_gateway.app.settings import GatewaySettings
-from api_gateway.sender import EXCHANGE_NAME, CelerySender
+from api_gateway.sender import EXCHANGE_NAME, CelerySender, PluginInfoResponse
 
 pytest_plugins = ('celery.contrib.pytest',)
 
@@ -133,6 +133,11 @@ def default_info_final(default_operator) -> PluginInfoFinal:
         methodology=default_operator.info_enriched.methodology[DEFAULT_LANGUAGE],
         language=DEFAULT_LANGUAGE,
     )
+
+
+@pytest.fixture
+def default_info_response(default_info_final) -> PluginInfoResponse:
+    return PluginInfoResponse(**default_info_final.model_dump(mode='json'), online=True)
 
 
 @pytest.fixture

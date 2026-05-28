@@ -7,6 +7,17 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 
 ## [Unreleased](https://gitlab.heigit.org/climate-action/api-gateway/-/compare/2.5.0...main)
 
+### Changed
+
+- `/plugin` now makes a single database query to get all plugin infos instead of one database query per active
+  plugin, reducing the response time ([#51](https://gitlab.heigit.org/climate-action/api-gateway/-/issues/51))
+
+### Added
+
+- The `PluginInfoFinal` object returned by `/plugin/{plugin_id}` and `/plugin` is replaced by `PluginInfoResponse`,
+  which contains the same keys as before, but additionally includes a boolean value for
+  `online` ([#41](https://gitlab.heigit.org/climate-action/api-gateway/-/issues/41))
+
 ## [2.5.0](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.5.0) - 2026-04-27
 
 ### Added
