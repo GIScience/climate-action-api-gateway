@@ -40,6 +40,26 @@ def test_list_active_plugins(default_sender, celery_worker, default_plugin):
     assert computed_plugins == expected_plugins
 
 
+def test_list_all_plugins(default_sender, default_info_response, default_plugin):
+    plugin_infos = default_sender.list_all_plugins()
+
+    assert plugin_infos == [default_info_response]
+
+
+def test_list_all_plugins_with_offline(default_sender, default_info_response, default_info_final, default_plugin):
+    offline_plugin_info = default_info_final.model_copy(deep=True)
+    offline_plugin_info.id = 'offline_plugin'
+    default_sender.backend_db.write_info(info=offline_plugin_info)
+
+    offline_info_response = default_info_response.model_copy(deep=True)
+    offline_info_response.id = 'offline_plugin'
+    offline_info_response.online = False
+
+    plugin_infos = default_sender.list_all_plugins()
+
+    assert plugin_infos == [default_info_response, offline_info_response]
+
+
 def test_request_info(default_sender, default_info_final, default_plugin, celery_worker):
     computed_info = default_sender.request_info(plugin_id='test_plugin')
     assert computed_info == default_info_final
