@@ -39,6 +39,12 @@ Follow the [database migration instructions](#database-migrations), then start t
 
 and head to [localhost:8000](http://localhost:8000/docs) to check out the results.
 
+Alternatively, you can use the new [FastAPI CLI](https://fastapi.tiangolo.com/fastapi-cli/) to start the api with auto-reload:
+
+```shell
+poetry run fastapi dev
+```
+
 Of course, you won't see much until you also launch a plugin that can answer your calls.
 You can try the [plugin-blueprint](https://gitlab.heigit.org/climate-action/plugin-blueprint) or any other plugin listed
 in the [infrastructure repository](https://gitlab.heigit.org/climate-action/infrastructure).
