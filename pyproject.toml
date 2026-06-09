@@ -33,6 +33,7 @@ repository = "https://gitlab.heigit.org/climate-action/api-gateway"
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^4.0.1"
 celery-types = "^0.26.0"
+fastapi-cli = ">=0.0.24,<0.0.25"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^9.0.0"
@@ -41,6 +42,9 @@ pytest-postgresql = "^8.0.0"
 pytest-alembic = "^0.12.1"
 httpx = "^0.28.1"
 freezegun = "^1.5.5"
+
+[tool.fastapi]
+entrypoint = "api_gateway.app.api:app"
 
 [tool.ruff]
 line-length = 120
