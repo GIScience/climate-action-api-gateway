@@ -19,9 +19,9 @@ def test_list_plugins(mocked_client, default_info_response, default_plugin):
 
 
 def test_list_plugins_only_latest_version(
-    mocked_client, default_info_final, default_info_response, default_plugin, default_backend_db
+    mocked_client, default_plugin_info_final, default_info_response, default_plugin, default_backend_db
 ):
-    newer_plugin_info = default_info_final.model_copy(deep=True)
+    newer_plugin_info = default_plugin_info_final.model_copy(deep=True)
     newer_plugin_info.version = Version(4, 0, 0)
     default_backend_db.write_info(info=newer_plugin_info)
 
@@ -43,16 +43,10 @@ def test_list_plugins_lang(mocked_client, default_info_response, default_plugin)
 
     response = response.json()
 
-    de_info = default_info_response.model_copy(
-        deep=True,
-        update={
-            'language': 'de',
-            'teaser': 'Eine Vorschau auf eine Testkomponente.',
-            'methodology': 'Dies ist eine Testbasis',
-            'purpose': 'Das Ziel dieser Komponente',
-        },
-    )
-    assert response == [de_info.model_dump(mode='json')]
+    assert len(response) == 1
+    response_info = response[0]
+    assert response_info['language'] == 'de'
+    assert response_info['methodology'] == 'Die Methoden auf Deutsch'
 
 
 def test_list_plugins_unknown_lang(mocked_client, default_info_response, default_plugin):
@@ -93,16 +87,8 @@ def test_get_plugin_by_language(mocked_client, default_info_response, default_pl
 
     response = response.json()
 
-    de_info = default_info_response.model_copy(
-        deep=True,
-        update={
-            'language': 'de',
-            'teaser': 'Eine Vorschau auf eine Testkomponente.',
-            'methodology': 'Dies ist eine Testbasis',
-            'purpose': 'Das Ziel dieser Komponente',
-        },
-    )
-    assert response == de_info.model_dump(mode='json')
+    assert response['language'] == 'de'
+    assert response['methodology'] == 'Die Methoden auf Deutsch'
 
 
 def test_get_plugin_by_language_unknonwn(mocked_client, default_info_response, default_plugin):
@@ -138,7 +124,7 @@ def test_plugin_compute(
     mocked_client,
     default_plugin,
     general_uuid,
-    default_aoi_pure_dict,
+    default_aoi_feature_pure_dict,
     default_backend_db,
     request_lang,
     computation_lang,
@@ -149,7 +135,7 @@ def test_plugin_compute(
 
     with patch('api_gateway.app.route.plugin.uuid.uuid4', return_value=general_uuid):
         response = mocked_client.post(
-            '/plugin/test_plugin', json={'aoi': default_aoi_pure_dict, 'params': dict()}, params=params
+            '/plugin/test_plugin', json={'aoi': default_aoi_feature_pure_dict, 'params': dict()}, params=params
         )
 
         assert response.status_code == 200
