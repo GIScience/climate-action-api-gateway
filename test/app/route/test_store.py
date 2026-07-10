@@ -48,12 +48,15 @@ def test_fetch_artifact_list_computation_unknown(mocked_client, backend_with_com
     assert response.status_code == 404
 
 
-def test_fetch_artifact(mocked_client, mocked_object_store, deduplicated_uuid, mocker):
+def test_fetch_artifact(
+    mocked_client, mocked_object_store, general_uuid, deduplicated_uuid, mocker, backend_with_computation_deduplicated
+):
     presign_spy = mocker.spy(mocked_object_store.client, 'presigned_get_object')
 
     response = mocked_client.get(f'/store/{deduplicated_uuid}/{deduplicated_uuid}', follow_redirects=False)
 
     assert response.status_code == 307
-    # TODO: why is there None in the path: https://test.host:1234/minio_test_bucket/None/03d8407a-f687-4e3e-ab95-1a53612c7856 ?
-    assert response.headers['location'] == 'test-presigned-url'
+    assert (
+        response.headers['location'] == f'https://test.host:1234/minio_test_bucket/{general_uuid}/{deduplicated_uuid}'
+    )
     assert presign_spy.call_count == 1
