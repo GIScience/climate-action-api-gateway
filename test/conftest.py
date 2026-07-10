@@ -42,8 +42,10 @@ def default_info_response(default_plugin_info_final) -> PluginInfoResponse:
 
 @pytest.fixture
 def default_sender(
-    celery_app, mocked_object_store, set_basic_envs, default_backend_db
+    celery_app, mocked_object_store, default_backend_db, set_basic_envs, monkeypatch
 ) -> Generator[CelerySender, None, None]:
+    monkeypatch.setenv('deduplicate_computations', 'true')
+
     with (
         patch('api_gateway.sender.Celery', return_value=celery_app),
         patch(
