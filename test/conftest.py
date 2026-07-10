@@ -1,4 +1,3 @@
-import os
 import uuid
 from pathlib import Path
 from typing import Generator
@@ -8,10 +7,9 @@ import pytest
 import sqlalchemy
 from climatoology.store.database import migration
 from climatoology.store.database.database import BackendDatabase
+from climatoology.test.fixtures.database import connection_to_string
 from kombu import Exchange, Queue
 from pytest_alembic import Config
-from pytest_postgresql.janitor import DatabaseJanitor
-from sqlalchemy import create_engine, text
 from starlette.testclient import TestClient
 
 from api_gateway.app.settings import GatewaySettings
@@ -74,69 +72,6 @@ def celery_app(celery_app, default_settings):
 
 
 @pytest.fixture
-def db_connection_params(request) -> dict:
-    if os.getenv('CI', 'False').lower() == 'true':
-        return {
-            'host': os.getenv('POSTGRES_HOST'),
-            'port': os.getenv('POSTGRES_PORT'),
-            'database': os.getenv('POSTGRES_DB'),
-            'user': os.getenv('POSTGRES_USER'),
-            'password': os.getenv('POSTGRES_PASSWORD'),
-        }
-    else:
-        postgresql = request.getfixturevalue('postgresql')
-        return {
-            'host': postgresql.info.host,
-            'port': postgresql.info.port,
-            'database': postgresql.info.dbname,
-            'user': postgresql.info.user,
-            'password': postgresql.info.password,
-        }
-
-
-@pytest.fixture
-def db_connection_string(db_connection_params) -> str:
-    host = db_connection_params['host']
-    port = db_connection_params['port']
-    dbname = db_connection_params['database']
-    user = db_connection_params['user']
-    password = db_connection_params['password']
-
-    if os.getenv('CI', 'False').lower() == 'true':
-        db_janitor = DatabaseJanitor(
-            host=host,
-            port=port,
-            dbname=dbname,
-            user=user,
-            password=password,
-            version=int(os.getenv('POSTGRES_VERSION')),
-        )
-        db_janitor.drop()
-        db_janitor.init()
-
-    return f'postgresql+psycopg://{user}:{password}@{host}:{port}/{dbname}'
-
-
-@pytest.fixture
-def db_with_postgis(db_connection_string) -> str:
-    with create_engine(db_connection_string).connect() as con:
-        con.execute(text('CREATE EXTENSION IF NOT EXISTS postgis;'))
-        con.commit()
-    return db_connection_string
-
-
-@pytest.fixture
-def db_with_tables(db_with_postgis, alembic_runner) -> str:
-    alembic_runner.migrate_up_to('head')
-    return db_with_postgis
-
-
-@pytest.fixture
-def default_backend_db(db_with_tables) -> BackendDatabase:
-    return BackendDatabase(connection_string=db_with_tables, user_agent='Test Climatoology Backend')
-
-
-@pytest.fixture
 def backend_with_computations(
     default_backend_db,
     default_computation_info,
@@ -175,8 +110,9 @@ def alembic_config() -> Config:
 
 
 @pytest.fixture
-def alembic_engine(db_with_postgis, set_basic_envs):
-    return sqlalchemy.create_engine(db_with_postgis)
+def alembic_engine(db_fixture_basic, set_basic_envs):
+    conn_str = connection_to_string(db_fixture_basic)
+    return sqlalchemy.create_engine(conn_str)
 
 
 @pytest.fixture

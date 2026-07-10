@@ -7,17 +7,19 @@ from celery import Celery
 from celery.exceptions import TaskRevokedError
 from celery.result import AsyncResult
 from climatoology.app.plugin import EXCHANGE_NAME, _create_plugin
+from climatoology.test.fixtures.database import connection_to_string
 from kombu.transport.pyamqp import Message
 
 from api_gateway.dlq_handler import CeleryDLQHandler
 
 
 @pytest.fixture
-def default_dlq_handler(db_with_tables):
+def default_dlq_handler(db_fixture_basic):
     # Don't use the default celery_app fixture, because we don't want to mess with its configuration (e.g. queues)
 
     # Use the pytest-postgresql as backend so that task states can be updated (to revoked)
-    dlq_celery_app = Celery('test_dlq_app', backend=f'db+{db_with_tables}')
+    conn_str = connection_to_string(db_fixture_basic)
+    dlq_celery_app = Celery('test_dlq_app', backend=f'db+{conn_str}')
     with patch('api_gateway.dlq_handler.Celery', return_value=dlq_celery_app):
         dlq_handler = CeleryDLQHandler()
 
