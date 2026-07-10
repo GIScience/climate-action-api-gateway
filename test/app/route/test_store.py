@@ -13,7 +13,9 @@ def test_fetch_icon(mocked_client, mocked_object_store, mocker):
     assert presign_spy.call_count == 1
 
 
-def test_fetch_metadata(mocked_client, deduplicated_uuid, default_computation_info, backend_with_computations):
+def test_fetch_metadata(
+    mocked_client, deduplicated_uuid, default_computation_info, backend_with_computation_deduplicated
+):
     expected_metadata = default_computation_info.model_dump(mode='json')
     # Because we never actually sent the test to celery, it considers the task to be `PENDING`.
     # This would be fixed when we resolve https://gitlab.heigit.org/climate-action/climatoology/-/issues/246
@@ -33,14 +35,16 @@ def test_fetch_metadata_unknown(mocked_client, deduplicated_uuid):
     assert response.status_code == 404
 
 
-def test_fetch_artifact_list(mocked_client, deduplicated_uuid, default_artifact_enriched, backend_with_computations):
+def test_fetch_artifact_list(
+    mocked_client, deduplicated_uuid, default_artifact_enriched, backend_with_computation_deduplicated
+):
     response = mocked_client.get(f'/store/{deduplicated_uuid}', follow_redirects=False)
 
     assert response.status_code == 200
     assert response.json() == [default_artifact_enriched.model_dump(mode='json')]
 
 
-def test_fetch_artifact_list_computation_unknown(mocked_client, backend_with_computations):
+def test_fetch_artifact_list_computation_unknown(mocked_client, backend_with_computation_deduplicated):
     correlation_uuid = uuid.uuid4()
     response = mocked_client.get(f'/store/{correlation_uuid}', follow_redirects=False)
 

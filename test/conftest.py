@@ -72,36 +72,21 @@ def celery_app(celery_app, default_settings):
 
 
 @pytest.fixture
-def backend_with_computations(
-    default_backend_db,
+def backend_with_computation_deduplicated(
+    backend_with_computation_successful,
     default_computation_info,
     default_plugin_info_final,
     deduplicated_uuid,
-    set_basic_envs,
-    frozen_time,
     default_plugin_key,
 ) -> BackendDatabase:
-    default_backend_db.write_info(info=default_plugin_info_final)
-    default_backend_db.register_computation(
-        correlation_uuid=default_computation_info.correlation_uuid,
-        requested_params=default_computation_info.requested_params,
-        aoi=default_computation_info.aoi,
-        plugin_key=default_plugin_key,
-        computation_shelf_life=default_plugin_info_final.computation_shelf_life,
-    )
-    default_backend_db.add_validated_params(
-        correlation_uuid=default_computation_info.correlation_uuid,
-        params={'id': 1, 'name': 'John Doe', 'execution_time': 0.0},
-    )
-    default_backend_db.update_successful_computation(computation_info=default_computation_info)
-    default_backend_db.register_computation(
+    backend_with_computation_successful.register_computation(
         correlation_uuid=deduplicated_uuid,
         requested_params=default_computation_info.requested_params,
         aoi=default_computation_info.aoi,
         plugin_key=default_plugin_key,
         computation_shelf_life=default_plugin_info_final.computation_shelf_life,
     )
-    return default_backend_db
+    return backend_with_computation_successful
 
 
 @pytest.fixture
