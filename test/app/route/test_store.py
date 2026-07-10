@@ -17,15 +17,12 @@ def test_fetch_metadata(
     mocked_client, deduplicated_uuid, default_computation_info, backend_with_computation_deduplicated
 ):
     expected_metadata = default_computation_info.model_dump(mode='json')
-    # Because we never actually sent the test to celery, it considers the task to be `PENDING`.
-    # This would be fixed when we resolve https://gitlab.heigit.org/climate-action/climatoology/-/issues/246
-    expected_metadata['status'] = ComputationState.PENDING
+    expected_metadata['status'] = ComputationState.SUCCESS
 
     response = mocked_client.get(f'/store/{deduplicated_uuid}/metadata')
     metadata = response.json()
 
     assert response.status_code == 200
-    # TODO: the metadata response does not show optional parameters. Why? Probably because we use the api-gateway DB not the climatoology one
     assert metadata == expected_metadata
 
 
