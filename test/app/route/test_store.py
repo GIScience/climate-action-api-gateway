@@ -53,10 +53,10 @@ def test_fetch_artifact(
 ):
     presign_spy = mocker.spy(mocked_object_store.client, 'presigned_get_object')
 
-    response = mocked_client.get(f'/store/{deduplicated_uuid}/{deduplicated_uuid}', follow_redirects=False)
+    store_id = 'my_artifact'
+
+    response = mocked_client.get(f'/store/{deduplicated_uuid}/{store_id}', follow_redirects=False)
 
     assert response.status_code == 307
-    assert (
-        response.headers['location'] == f'https://test.host:1234/minio_test_bucket/{general_uuid}/{deduplicated_uuid}'
-    )
+    assert response.headers['location'] == f'https://test.host:1234/minio_test_bucket/{general_uuid}/{store_id}'
     assert presign_spy.call_count == 1
