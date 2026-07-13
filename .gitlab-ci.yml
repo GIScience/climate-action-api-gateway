@@ -36,7 +36,7 @@ unit_tests:
     - $POETRY_HOME/bin/pip install poetry==2.4.1
     - export PATH="$PATH:$POETRY_HOME/bin"
     - poetry config virtualenvs.in-project true
-    - poetry sync --with dev,test
+    - poetry sync
     - poetry update climatoology # trigger re-fetch from climatoology main branch on plugin development branch
   script:
     - poetry run pytest -x --cov --cov-report term --cov-report xml:coverage.xml
