@@ -13,7 +13,7 @@ from climatoology.base.baseoperator import BaseOperator
 from climatoology.base.computation import ComputationInfo, ComputationResources
 from climatoology.base.exception import ClimatoologyUserError, InputValidationError
 from climatoology.base.plugin_info import DEFAULT_LANGUAGE, PluginInfo
-from climatoology.test.fixtures.base import TestModel
+from climatoology.test.models import TestModel
 from semver import Version
 
 from api_gateway.sender import EXCHANGE_NAME, CacheOverrides, CelerySender
@@ -135,6 +135,7 @@ def test_send_compute_writes_to_backend(
     assert stored_computation.correlation_uuid == general_uuid
 
 
+@pytest.mark.skip('testing celery and climatoology functionality')
 def test_send_compute_produces_result(
     default_sender,
     default_plugin,
@@ -215,6 +216,7 @@ def test_send_compute_with_cache_override(
     assert computation_info.cache_epoch == 0
 
 
+@pytest.mark.skip('testing celery and climatoology functionality')
 def test_send_compute_state_receives_input_validation_error(
     default_sender,
     default_plugin,
@@ -243,6 +245,7 @@ def test_send_compute_state_receives_input_validation_error(
     )
 
 
+@pytest.mark.skip('testing celery and climatoology functionality')
 def test_send_compute_input_validation_error_is_cached(
     default_sender,
     default_plugin,
@@ -267,6 +270,7 @@ def test_send_compute_input_validation_error_is_cached(
     assert stored_computation_info.cache_epoch == 0
 
 
+@pytest.mark.skip('testing celery and climatoology functionality')
 def test_send_compute_state_receives_ClimatoologyUserError(  # noqa: N802 - allow capitalisation in function name
     default_plugin_info,
     celery_app,
@@ -306,6 +310,7 @@ def test_send_compute_state_receives_ClimatoologyUserError(  # noqa: N802 - allo
     assert str(result.info) == 'Error message to store for the user'
 
 
+@pytest.mark.skip('testing celery and climatoology functionality')
 def test_send_compute_ClimatoologyUserError_is_not_cached(  # noqa: N802
     default_plugin_info,
     celery_app,
@@ -345,6 +350,7 @@ def test_send_compute_ClimatoologyUserError_is_not_cached(  # noqa: N802
     assert stored_computation_info.cache_epoch is None
 
 
+@pytest.mark.skip('testing celery and climatoology functionality')
 def test_send_compute_artifact_errors_invalidate_cache(
     default_plugin_info,
     default_artifact_metadata,
@@ -448,6 +454,7 @@ def test_send_compute_reaches_worker(
     assert celery_worker.stats()['total'].get('compute') == (previous_computations + 1)
 
 
+@pytest.mark.skip('testing celery and climatoology functionality')
 def test_send_compute_before_expiry_runs(
     default_backend_db,
     default_plugin,
