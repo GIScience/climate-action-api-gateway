@@ -738,7 +738,7 @@ fixtures = ["freezegun (>=1.5.5,<2.0.0)", "pytest (>=9.1.1,<10.0.0)", "pytest-mi
 type = "git"
 url = "https://gitlab.heigit.org/climate-action/climatoology.git"
 reference = "294-share-fixtures"
-resolved_reference = "0098e0b0341d3c8a5643a6779a55f9761087ccf6"
+resolved_reference = "49b3fcb3190a4d2b0f726151f2bf5ccf6e47d6ba"
 
 [[package]]
 name = "colorama"
