@@ -23,48 +23,19 @@ pytest_plugins = (
 
 
 @pytest.fixture
+def mocked_client(default_sender) -> Generator[TestClient, None, None]:
+    with patch('fastapi_cache.decorator.cache', lambda *args, **kwargs: lambda f: f):
+        from api_gateway.app.api import app
+    app.state.settings = GatewaySettings()
+    app.state.platform = default_sender
+    client = TestClient(app)
+
+    yield client
+
+
+@pytest.fixture
 def deduplicated_uuid() -> uuid.UUID:
     return uuid.uuid4()
-
-
-@pytest.fixture
-def default_info_response(default_plugin_info_final) -> PluginInfoResponse:
-    response_info = default_plugin_info_final.model_copy()
-    response_info.operator_schema['$defs']['Option']['x-translation'] = {'OPT1': 'OPT1', 'OPT2': 'OPT2'}
-    return PluginInfoResponse(**response_info.model_dump(mode='json'), online=True)
-
-
-@pytest.fixture
-def default_sender(
-    celery_app, mocked_object_store, default_backend_db, set_basic_envs, monkeypatch
-) -> Generator[CelerySender, None, None]:
-    monkeypatch.setenv('deduplicate_computations', 'true')
-
-    with (
-        patch('api_gateway.sender.Celery', return_value=celery_app),
-        patch(
-            'api_gateway.sender.CelerySender.construct_storage',
-            return_value=mocked_object_store,
-        ),
-        patch('api_gateway.sender.BackendDatabase', return_value=default_backend_db),
-    ):
-        yield CelerySender()
-
-
-@pytest.fixture
-def celery_app(celery_app, default_settings):
-    # Add queue to the base celery_app, so the platform also knows about it (because we aren't running rabbitmq for real)
-    compute_queue = Queue(
-        name='test_plugin',
-        exchange=Exchange(EXCHANGE_NAME),
-        routing_key='test_plugin',
-        queue_arguments={
-            'x-dead-letter-exchange': default_settings.deadletter_exchange_name,
-            'x-dead-letter-routing-key': default_settings.deadletter_channel_name,
-        },
-    )
-    celery_app.amqp.queues.select_add(compute_queue)
-    yield celery_app
 
 
 @pytest.fixture
@@ -86,11 +57,40 @@ def backend_with_computation_deduplicated(
 
 
 @pytest.fixture
-def mocked_client(default_sender) -> Generator[TestClient, None, None]:
-    with patch('fastapi_cache.decorator.cache', lambda *args, **kwargs: lambda f: f):
-        from api_gateway.app.api import app
-    app.state.settings = GatewaySettings()
-    app.state.platform = default_sender
-    client = TestClient(app)
+def celery_app(celery_app, default_settings):
+    # Add queue to the base celery_app, so the platform also knows about it (because we aren't running rabbitmq for real)
+    compute_queue = Queue(
+        name='test_plugin',
+        exchange=Exchange(EXCHANGE_NAME),
+        routing_key='test_plugin',
+        queue_arguments={
+            'x-dead-letter-exchange': default_settings.deadletter_exchange_name,
+            'x-dead-letter-routing-key': default_settings.deadletter_channel_name,
+        },
+    )
+    celery_app.amqp.queues.select_add(compute_queue)
+    yield celery_app
 
-    yield client
+
+@pytest.fixture
+def default_sender(
+    celery_app, mocked_object_store, default_backend_db, set_basic_envs, monkeypatch
+) -> Generator[CelerySender, None, None]:
+    monkeypatch.setenv('deduplicate_computations', 'true')
+
+    with (
+        patch('api_gateway.sender.Celery', return_value=celery_app),
+        patch(
+            'api_gateway.sender.CelerySender.construct_storage',
+            return_value=mocked_object_store,
+        ),
+        patch('api_gateway.sender.BackendDatabase', return_value=default_backend_db),
+    ):
+        yield CelerySender()
+
+
+@pytest.fixture
+def default_info_response(default_plugin_info_final) -> PluginInfoResponse:
+    response_info = default_plugin_info_final.model_copy()
+    response_info.operator_schema['$defs']['Option']['x-translation'] = {'OPT1': 'OPT1', 'OPT2': 'OPT2'}
+    return PluginInfoResponse(**response_info.model_dump(mode='json'), online=True)
