@@ -1,15 +1,10 @@
 import uuid
-from pathlib import Path
 from typing import Generator
 from unittest.mock import patch
 
 import pytest
-import sqlalchemy
-from climatoology.store.database import migration
 from climatoology.store.database.database import BackendDatabase
-from climatoology.test.fixtures.database import connection_to_string
 from kombu import Exchange, Queue
-from pytest_alembic import Config
 from starlette.testclient import TestClient
 
 from api_gateway.app.settings import GatewaySettings
@@ -18,7 +13,6 @@ from api_gateway.sender import EXCHANGE_NAME, CelerySender, PluginInfoResponse
 pytest_plugins = (
     'celery.contrib.pytest',
     'climatoology.test.fixtures.base',
-    # 'climatoology.test.fixtures.alembic',
     'climatoology.test.fixtures.aoi',
     'climatoology.test.fixtures.artifact',
     'climatoology.test.fixtures.computation',
@@ -89,17 +83,6 @@ def backend_with_computation_deduplicated(
         computation_shelf_life=default_plugin_info_final.computation_shelf_life,
     )
     return backend_with_computation_successful
-
-
-@pytest.fixture
-def alembic_config() -> Config:
-    return Config(config_options={'script_location': str(Path(migration.__file__).parent)})
-
-
-@pytest.fixture
-def alembic_engine(db_fixture_basic, set_basic_envs):
-    conn_str = connection_to_string(db_fixture_basic)
-    return sqlalchemy.create_engine(conn_str)
 
 
 @pytest.fixture
