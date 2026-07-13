@@ -14,7 +14,7 @@ from api_gateway.dlq_handler import CeleryDLQHandler
 
 
 @pytest.fixture
-def default_dlq_handler(db_fixture_basic):
+def default_dlq_handler(db_fixture_basic, set_basic_envs):
     # Don't use the default celery_app fixture, because we don't want to mess with its configuration (e.g. queues)
 
     # Use the pytest-postgresql as backend so that task states can be updated (to revoked)
