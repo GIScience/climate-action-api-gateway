@@ -31,6 +31,11 @@ class CacheOverrides(StrEnum):
     NEVER = 'no-cache'
 
 
+class PluginStatus(StrEnum):
+    ONLINE = 'online'
+    OFFLINE = 'offline'
+
+
 class PluginInfoResponse(PluginInfoFinal):
     online: bool = False
 
@@ -88,7 +93,7 @@ class CelerySender:
         )
 
     def list_active_plugins(self) -> Set[str]:
-        """Retrieve a list of active plugins.
+        """Retrieve a list of active workers. Ping them and return the ones that have a 'compute' task.
 
         :return: List of plugin ids
         """
@@ -98,6 +103,12 @@ class CelerySender:
         log.debug(f'Active plugins: {plugins}.')
 
         return plugins
+
+    def get_plugin_status(self, plugin_id: str) -> PluginStatus:
+        if plugin_id in self.list_active_plugins():
+            return PluginStatus.ONLINE
+
+        return PluginStatus.OFFLINE
 
     def list_all_plugins(self, lang: LanguageAlpha2 = DEFAULT_LANGUAGE) -> list[PluginInfoResponse]:
         """Retrieve a list of all plugins and whether or not they are online."""
@@ -131,7 +142,7 @@ class CelerySender:
 
         return plugin_infos
 
-    def request_info(self, plugin_id: str, lang: LanguageAlpha2 = DEFAULT_LANGUAGE) -> PluginInfoFinal:
+    def request_info(self, plugin_id: str, lang: LanguageAlpha2 = DEFAULT_LANGUAGE) -> PluginInfoResponse:
         log.debug(f"Requesting 'info' from {plugin_id}.")
         info_return = self.backend_db.read_info(plugin_id=plugin_id, language=lang)
 
@@ -150,7 +161,11 @@ class CelerySender:
                 f'Plugin library version: {info_return.library_version}'
             )
 
-        return info_return
+        status = self.get_plugin_status(plugin_id)
+        is_online = True if status == PluginStatus.ONLINE else False
+        info_response = PluginInfoResponse(**info_return.model_dump(), online=is_online)
+
+        return info_response
 
     def send_compute_request(
         self,

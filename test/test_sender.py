@@ -1,6 +1,6 @@
 import uuid
 from typing import List
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 from celery.exceptions import TaskRevokedError
@@ -60,27 +60,19 @@ def test_list_all_plugins_with_offline(default_sender, default_info_response, de
     assert plugin_infos == [default_info_response, offline_info_response]
 
 
-def test_request_info(default_sender, default_info_final, default_plugin, celery_worker):
+def test_request_info(default_sender, default_info_response, default_plugin, celery_worker):
     computed_info = default_sender.request_info(plugin_id='test_plugin')
-    assert computed_info == default_info_final
+    assert computed_info.model_dump() == default_info_response.model_dump()
 
 
 @patch('climatoology.__version__', Version(1, 0, 0))
-def test_request_info_plugin_version_assert(default_sender, default_info, default_plugin, celery_worker):
+def test_request_info_plugin_version_assert(default_sender, default_plugin, celery_worker):
     with pytest.raises(VersionMismatchError, match='Refusing to register plugin.*'):
         default_sender.request_info(plugin_id='test_plugin')
 
 
-def test_send_compute(
-    default_sender,
-    default_plugin,
-    default_aoi_feature_geojson_pydantic,
-    general_uuid,
-    default_artifact,
-    celery_app,
-):
-    mocked_app = Mock(side_effect=celery_app)
-    default_sender.celery_app = mocked_app
+def test_send_compute(default_sender, default_aoi_feature_geojson_pydantic, general_uuid, default_plugin, mocker):
+    send_task_spy = mocker.spy(default_sender.celery_app, 'send_task')
 
     _ = default_sender.send_compute_request(
         plugin_id='test_plugin',
@@ -89,7 +81,7 @@ def test_send_compute(
         correlation_uuid=general_uuid,
     )
 
-    mocked_app.send_task.assert_called_once_with(
+    send_task_spy.assert_called_once_with(
         name='compute',
         kwargs={
             'aoi': {
@@ -490,7 +482,7 @@ def test_send_compute_expires_in_queue(
         aoi=default_aoi_feature_geojson_pydantic,
         params={'id': 2, 'execution_time': 0},
         correlation_uuid=general_uuid,
-        q_time=0.5,
+        q_time=0.1,
     )
 
     _ = blocker_task.get(timeout=5)

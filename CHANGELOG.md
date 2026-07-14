@@ -7,6 +7,11 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 
 ## [Unreleased](https://gitlab.heigit.org/climate-action/api-gateway/-/compare/2.7.0...main)
 
+### Changed
+
+- `CelerySender.request_info` now already returns a `PluginInfoResponse` object, to align with the `list_all_plugins`
+  method, so the API endpoint no longer needs to do the status check after receiving the info
+
 ## [2.7.0](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.7.0) - 2026-06-26
 
 ### Added

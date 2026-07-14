@@ -1,7 +1,6 @@
 import logging
 import uuid
 from dataclasses import dataclass
-from enum import StrEnum
 from typing import Annotated, List
 from uuid import UUID
 
@@ -17,16 +16,11 @@ from pydantic_extra_types.language_code import LanguageAlpha2
 from starlette.requests import Request
 
 from api_gateway.app.utils import cache_ttl
-from api_gateway.sender import CacheOverrides, PluginInfoResponse
+from api_gateway.sender import CacheOverrides, PluginInfoResponse, PluginStatus
 
 log = logging.getLogger(__name__)
 
 router = APIRouter(prefix='/plugin', tags=['plugin'])
-
-
-class PluginStatus(StrEnum):
-    ONLINE = 'online'
-    OFFLINE = 'offline'
 
 
 @dataclass
@@ -50,15 +44,12 @@ async def list_plugins(request: Request, lang: LanguageAlpha2 = DEFAULT_LANGUAGE
 async def get_plugin(plugin_id: str, request: Request, lang: LanguageAlpha2 = DEFAULT_LANGUAGE) -> PluginInfoResponse:
     try:
         info = request.app.state.platform.request_info(plugin_id=plugin_id, lang=lang)
-        plugin_status = await get_plugin_status(info.id, request=request)
-        is_online = True if plugin_status.status == PluginStatus.ONLINE else False
-        info_response = PluginInfoResponse(**info.model_dump(), online=is_online)
     except InfoNotReceivedError as e:
         if lang == DEFAULT_LANGUAGE:
             raise HTTPException(status_code=404, detail=f'Plugin {plugin_id} does not exist.') from e
         else:
             log.debug(f'Plugin {plugin_id} does not exist in language {lang}, returning {DEFAULT_LANGUAGE} instead')
-            info_response = await get_plugin(plugin_id=plugin_id, request=request)
+            info = await get_plugin(plugin_id=plugin_id, request=request)
     except VersionMismatchError as e:
         raise HTTPException(
             status_code=500, detail=f'Plugin {plugin_id} is not in a correct state (version mismatch).'
@@ -68,17 +59,15 @@ async def get_plugin(plugin_id: str, request: Request, lang: LanguageAlpha2 = DE
             status_code=500, detail=f'Plugin info of {plugin_id} is in a broken state in the database.'
         ) from e
 
-    return info_response
+    return info
 
 
 @router.get(path='/{plugin_id}/status', summary='Is this plugin online?')
 @cache(expire=cache_ttl(60))
 async def get_plugin_status(plugin_id: str, request: Request) -> PluginStatusObject:
     try:
-        pong = request.app.state.platform.celery_app.control.inspect().ping()
-        pong = [response for key, response in pong.items() if key.startswith(plugin_id)]
-        if {'ok': 'pong'} in pong:
-            return PluginStatusObject(status=PluginStatus.ONLINE)
+        status = request.app.state.platform.get_plugin_status(plugin_id)
+        return PluginStatusObject(status=status)
     except Exception as e:
         log.debug(f'Plugin {plugin_id} ping failed', exc_info=e)
     return PluginStatusObject(status=PluginStatus.OFFLINE)
