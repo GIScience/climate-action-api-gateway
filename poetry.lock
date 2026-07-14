@@ -2865,6 +2865,27 @@ pytest = ">=7"
 testing = ["process-tests", "pytest-xdist", "virtualenv"]
 
 [[package]]
+name = "pytest-minio-mock"
+version = "0.4.19"
+description = "A pytest plugin for mocking Minio S3 interactions"
+optional = false
+python-versions = ">=3.8"
+groups = ["test"]
+files = [
+    {file = "pytest_minio_mock-0.4.19-py3-none-any.whl", hash = "sha256:d93567670a01acfe2e2f8f4d056e64686eb14b622682702058dd53e71eba62c7"},
+    {file = "pytest_minio_mock-0.4.19.tar.gz", hash = "sha256:b8dabd09dd4a4dc5970bd57155a32b1161f88a48d0aac38ab9b95c39029e1d09"},
+]
+
+[package.dependencies]
+minio = "*"
+pytest = ">=5.0.0"
+pytest-mock = "*"
+validators = "*"
+
+[package.extras]
+dev = ["pre-commit", "tox"]
+
+[[package]]
 name = "pytest-mock"
 version = "3.15.1"
 description = "Thin-wrapper around the mock package for easier use with pytest"
@@ -4203,4 +4224,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13.5,<3.14"
-content-hash = "2291f75aa13ba20fc7d43c74cc472cc96d4eecd851ea462199d79029f5cab24a"
+content-hash = "348522d8f13811b3a8e3f1bed124b130ea2b42781c84e6e2f851524c68a52b4f"
