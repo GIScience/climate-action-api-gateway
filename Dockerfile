@@ -10,7 +10,7 @@ WORKDIR $WD
 ENV POETRY_HOME="$WD/.cache/poetry"
 
 RUN python3 -m venv $POETRY_HOME &&\
-    $POETRY_HOME/bin/pip install poetry==2.* \
+    $POETRY_HOME/bin/pip install poetry==2.*
 
 
 ENV PATH="$PATH:$POETRY_HOME/bin"
