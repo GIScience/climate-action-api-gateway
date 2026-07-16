@@ -11,12 +11,13 @@ unit_tests:
     - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"
     - if: $CI_PIPELINE_SOURCE == "pipeline"
   image:
-    name: python:3.13.5
+    name: python:3.13
   services:
     - name: postgis/postgis:17-3.5
       alias: postgres
   variables:
     PRE_COMMIT_HOME: "$CI_PROJECT_DIR/.cache/pre-commit"
+    POETRY_HOME: "$CI_PROJECT_DIR/.cache/poetry"
     POSTGRES_HOST: postgres
     POSTGRES_PORT: 5432
     POSTGRES_DB: test_db
@@ -28,14 +29,14 @@ unit_tests:
     key: $CI_COMMIT_REF_NAME
     paths:
       - $PRE_COMMIT_HOME
+      - $POETRY_HOME
       - .venv
-      - .venv-poetry
   before_script:
-    - python3 -m venv .venv-poetry
-    - source .venv-poetry/bin/activate
-    - pip install poetry==2.3.2
+    - python3 -m venv $POETRY_HOME
+    - $POETRY_HOME/bin/pip install poetry==2.4.1
+    - export PATH="$PATH:$POETRY_HOME/bin"
     - poetry config virtualenvs.in-project true
-    - poetry install --with dev,test
+    - poetry sync --with dev,test
     - poetry update climatoology # trigger re-fetch from climatoology main branch on plugin development branch
   script:
     - poetry run pytest -x --cov --cov-report term --cov-report xml:coverage.xml
