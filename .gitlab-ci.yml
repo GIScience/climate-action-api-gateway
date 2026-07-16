@@ -38,8 +38,8 @@ unit_tests:
     - poetry install --with dev,test
     - poetry update climatoology # trigger re-fetch from climatoology main branch on plugin development branch
   script:
-    - poetry run pre-commit run --all-files
     - poetry run pytest -x --cov --cov-report term --cov-report xml:coverage.xml
+    - poetry run pre-commit run --all-files
   coverage: '/TOTAL.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
   artifacts:
     reports:
