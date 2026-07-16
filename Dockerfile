@@ -1,4 +1,4 @@
-FROM python:3.13.5-bookworm
+FROM python:3.13-bookworm
 
 ENV PACKAGE_NAME="api_gateway"
 
