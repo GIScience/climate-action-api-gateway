@@ -7,21 +7,25 @@ from climatoology.app.settings import CABaseSettings
 from kombu import Exchange, Queue
 from kombu.transport.pyamqp import Message
 
+from api_gateway.app.settings import GatewaySettings
+
 log = logging.getLogger(__name__)
 
 
 class CeleryDLQHandler:
     def __init__(self):
-        settings = CABaseSettings()
-        self.celery_app = self.create_dlq_app(settings)
+        base_settings = CABaseSettings()
+        gateway_settings = GatewaySettings()
+        self.celery_app = self.create_dlq_app(base_settings, worker_concurrency=gateway_settings.dlq_worker_concurrency)
 
     @classmethod
-    def create_dlq_app(cls, settings: CABaseSettings) -> Celery:
+    def create_dlq_app(cls, settings: CABaseSettings, worker_concurrency: int) -> Celery:
         app_name = 'dlq_handler'
         app = Celery(
             app_name,
             broker=settings.broker_connection_string,
             backend=settings.backend_connection_string,
+            worker_concurrency=worker_concurrency,
         )
 
         cls.configure_celery_queue(settings=settings, app=app)

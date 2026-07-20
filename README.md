@@ -142,10 +142,11 @@ docker build . \
 
 ### Further Optional Parameters
 
-| env var                    | description                                    |
-| -------------------------- | ---------------------------------------------- |
-| MINIO_SECURE               | set to True to enable SSL in Minio connections |
-| FILE_CACHE                 | location where files are temporarily stored    |
-| API_GATEWAY_APP_CONFIG_DIR | The directory holding configuration files      |
-| API_GATEWAY_API_PORT       | The port, the api should start under           |
-| LOG_LEVEL                  | The api logging level                          |
+| env var                    | description                                             |
+| -------------------------- | ------------------------------------------------------- |
+| MINIO_SECURE               | set to True to enable SSL in Minio connections          |
+| FILE_CACHE                 | location where files are temporarily stored             |
+| API_GATEWAY_APP_CONFIG_DIR | The directory holding configuration files               |
+| API_GATEWAY_API_PORT       | The port, the api should start under                    |
+| DLQ_WORKER_CONCURRENCY     | The number of workers for the DLQ handler (default = 1) |
+| LOG_LEVEL                  | The api logging level                                   |

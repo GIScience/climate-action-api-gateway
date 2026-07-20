@@ -11,6 +11,8 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 
 - `CelerySender.request_info` now already returns a `PluginInfoResponse` object, to align with the `list_all_plugins`
   method, so the API endpoint no longer needs to do the status check after receiving the info
+- `GatewaySettings` now includes `dlq_worker_concurrency`, default=1, for the DLQ handler celery
+  app ([#64](https://gitlab.heigit.org/climate-action/api-gateway/-/issues/64))
 
 ## [2.7.0](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.7.0) - 2026-06-26
 

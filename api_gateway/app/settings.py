@@ -14,6 +14,7 @@ class GatewaySettings(BaseSettings):
 
     computation_queue_time: Optional[float] = timedelta(minutes=30).total_seconds()
     computation_time_limit: Optional[float] = None
+    dlq_worker_concurrency: int = 1
 
     disable_swagger: bool = False
     disable_caching: bool = False
