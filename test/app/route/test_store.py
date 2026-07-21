@@ -3,14 +3,14 @@ import uuid
 from climatoology.base.computation import ComputationState
 
 
-def test_fetch_icon(mocked_client, mocked_object_store, mocker):
-    presign_spy = mocker.spy(mocked_object_store.client, 'presigned_get_object')
-
+def test_fetch_icon(mocked_client):
     response = mocked_client.get('/store/test_plugin/icon', follow_redirects=False)
 
     assert response.status_code == 307
-    assert response.headers['location'] == 'https://test.host:1234/minio_test_bucket/assets/test_plugin/latest/ICON.png'
-    assert presign_spy.call_count == 1
+
+    url, params = response.headers['location'].split('?')
+    assert url == 'https://test.host:1234/s3_test_bucket/assets/test_plugin/latest/ICON.png'
+    assert 'X-Amz-Signature=' in params  # TODO: testing climatoology here?
 
 
 def test_fetch_metadata(
@@ -48,15 +48,13 @@ def test_fetch_artifact_list_computation_unknown(mocked_client, backend_with_com
     assert response.status_code == 404
 
 
-def test_fetch_artifact(
-    mocked_client, mocked_object_store, general_uuid, deduplicated_uuid, mocker, backend_with_computation_deduplicated
-):
-    presign_spy = mocker.spy(mocked_object_store.client, 'presigned_get_object')
-
+def test_fetch_artifact(mocked_client, general_uuid, deduplicated_uuid, backend_with_computation_deduplicated):
     store_id = 'my_artifact'
 
     response = mocked_client.get(f'/store/{deduplicated_uuid}/{store_id}', follow_redirects=False)
 
     assert response.status_code == 307
-    assert response.headers['location'] == f'https://test.host:1234/minio_test_bucket/{general_uuid}/{store_id}'
-    assert presign_spy.call_count == 1
+
+    url, params = response.headers['location'].split('?')
+    assert url == f'https://test.host:1234/s3_test_bucket/{general_uuid}/{store_id}'
+    assert 'X-Amz-Signature=' in params  # TODO: testing climatoology here?

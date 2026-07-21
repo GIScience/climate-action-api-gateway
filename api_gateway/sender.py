@@ -84,12 +84,12 @@ class CelerySender:
     @staticmethod
     def construct_storage(settings: CABaseSettings) -> Storage:
         return S3Storage(
-            host=settings.minio_host,
-            port=settings.minio_port,
-            access_key=settings.minio_access_key,
-            secret_key=settings.minio_secret_key,
-            bucket=settings.minio_bucket,
-            secure=settings.minio_secure,
+            host=settings.s3_host,
+            port=settings.s3_port,
+            access_key=settings.s3_access_key,
+            secret_key=settings.s3_secret_key,
+            bucket=settings.s3_bucket,
+            secure=settings.s3_secure,
         )
 
     def list_active_plugins(self) -> Set[str]:
