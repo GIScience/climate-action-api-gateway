@@ -2,6 +2,8 @@ import uuid
 
 from climatoology.base.computation import ComputationState
 
+from api_gateway.app.route.store import ComputationInfoResponse
+
 
 def test_fetch_icon(mocked_client):
     response = mocked_client.get('/store/test_plugin/icon', follow_redirects=False)
@@ -16,14 +18,15 @@ def test_fetch_icon(mocked_client):
 def test_fetch_metadata(
     mocked_client, deduplicated_uuid, default_computation_info, backend_with_computation_deduplicated
 ):
-    expected_metadata = default_computation_info.model_dump(mode='json')
-    expected_metadata['status'] = ComputationState.SUCCESS
+    expected_metadata = ComputationInfoResponse(
+        **default_computation_info.model_dump(), status=ComputationState.SUCCESS
+    )
 
     response = mocked_client.get(f'/store/{deduplicated_uuid}/metadata')
     metadata = response.json()
 
     assert response.status_code == 200
-    assert metadata == expected_metadata
+    assert metadata == expected_metadata.model_dump(mode='json')
 
 
 def test_fetch_metadata_unknown(mocked_client, deduplicated_uuid):
