@@ -40,7 +40,7 @@ async def list_plugins(request: Request, lang: LanguageAlpha2 = DEFAULT_LANGUAGE
 
 
 @router.get(path='/{plugin_id}', summary='Get information on a specific plugin or check its online status.')
-@cache(expire=cache_ttl(60 * 60))
+@cache(expire=cache_ttl(60 * 60), coder=PluginInfoResponse)
 async def get_plugin(plugin_id: str, request: Request, lang: LanguageAlpha2 = DEFAULT_LANGUAGE) -> PluginInfoResponse:
     try:
         info = request.app.state.platform.request_info(plugin_id=plugin_id, lang=lang)

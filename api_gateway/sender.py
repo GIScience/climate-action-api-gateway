@@ -16,6 +16,7 @@ from climatoology.base.plugin_info import DEFAULT_LANGUAGE, PluginInfoFinal
 from climatoology.store.database.database import BackendDatabase
 from climatoology.store.exception import InfoNotReceivedError
 from climatoology.store.object_store import MinioStorage, Storage
+from fastapi_cache import Coder
 from ordered_set import OrderedSet
 from pydantic import ValidationError
 from pydantic_extra_types.language_code import LanguageAlpha2
@@ -36,8 +37,16 @@ class PluginStatus(StrEnum):
     OFFLINE = 'offline'
 
 
-class PluginInfoResponse(PluginInfoFinal):
+class PluginInfoResponse(PluginInfoFinal, Coder):
     online: bool = False
+
+    @classmethod
+    def encode(cls, value: 'PluginInfoResponse') -> bytes:
+        return value.model_dump_json().encode()
+
+    @classmethod
+    def decode(cls, value: bytes) -> 'PluginInfoResponse':
+        return cls.model_validate_json(value.decode())
 
 
 class SenderSettings(BaseSettings):

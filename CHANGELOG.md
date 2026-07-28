@@ -14,6 +14,11 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 - `GatewaySettings` now includes `dlq_worker_concurrency`, default=1, for the DLQ handler celery
   app ([#64](https://gitlab.heigit.org/climate-action/api-gateway/-/issues/64))
 
+### Fixed
+
+- The caching for the `/plugin/{plugin_info}` function now has a cache coder to correctly deserialize cached responses
+  to the correct type (`PluginInfoResponse`) ([#66](https://gitlab.heigit.org/climate-action/api-gateway/-/issues/66))
+
 ## [2.7.0](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.7.0) - 2026-06-26
 
 ### Added
