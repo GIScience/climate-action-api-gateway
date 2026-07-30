@@ -13,10 +13,12 @@ def test_computation_status_unknown(mocked_client, general_uuid):
     assert response.status_code == 404
 
 
-def test_computation_status_success(mocked_client, default_plugin, default_aoi_pure_dict):
+def test_computation_status_success(mocked_client, default_plugin, default_aoi_feature_pure_dict):
     correlation_uuid = uuid.uuid4()
     with patch('api_gateway.app.route.plugin.uuid.uuid4', return_value=correlation_uuid):
-        response = mocked_client.post('/plugin/test_plugin', json={'aoi': default_aoi_pure_dict, 'params': {'id': 1}})
+        response = mocked_client.post(
+            '/plugin/test_plugin', json={'aoi': default_aoi_feature_pure_dict, 'params': {'id': 1}}
+        )
         response.raise_for_status()
         result = AsyncResult(id=str(correlation_uuid), backend=default_plugin.backend)
         _ = result.get(5)
@@ -26,10 +28,12 @@ def test_computation_status_success(mocked_client, default_plugin, default_aoi_p
     assert response.json() == {'state': ComputationState.SUCCESS, 'message': ''}
 
 
-def test_computation_status_revoked_q_time_exceeded(mocked_client, general_uuid, default_aoi_pure_dict, default_plugin):
+def test_computation_status_revoked_q_time_exceeded(
+    mocked_client, general_uuid, default_aoi_feature_pure_dict, default_plugin
+):
     mocked_client.app.state.settings.computation_queue_time = 0.0
     with patch('api_gateway.app.route.plugin.uuid.uuid4', return_value=general_uuid):
-        mocked_client.post('/plugin/test_plugin', json={'aoi': default_aoi_pure_dict, 'params': {'id': 1}})
+        mocked_client.post('/plugin/test_plugin', json={'aoi': default_aoi_feature_pure_dict, 'params': {'id': 1}})
 
     # Wait for the task to be processed before we query its state
     with pytest.raises(TaskRevokedError):
@@ -44,9 +48,13 @@ def test_computation_status_revoked_q_time_exceeded(mocked_client, general_uuid,
     }
 
 
-def test_computation_status_message_on_wrong_input(mocked_client, general_uuid, default_aoi_pure_dict, default_plugin):
+def test_computation_status_message_on_wrong_input(
+    mocked_client, general_uuid, default_aoi_feature_pure_dict, default_plugin
+):
     with patch('api_gateway.app.route.plugin.uuid.uuid4', return_value=general_uuid):
-        mocked_client.post('/plugin/test_plugin', json={'aoi': default_aoi_pure_dict, 'params': {'wrong': True}})
+        mocked_client.post(
+            '/plugin/test_plugin', json={'aoi': default_aoi_feature_pure_dict, 'params': {'wrong': True}}
+        )
 
     time.sleep(1)  # let the worker do its job
     response = mocked_client.get(f'/computation/{general_uuid}/state')
