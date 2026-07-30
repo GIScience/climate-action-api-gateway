@@ -3,7 +3,7 @@ from typing import List
 from uuid import UUID
 
 from climatoology.base.artifact import ArtifactEnriched
-from climatoology.base.computation import ComputationInfo
+from climatoology.base.computation import ComputationInfo, ComputationState
 from fastapi import APIRouter, HTTPException
 from fastapi_cache.decorator import cache
 from starlette.requests import Request
@@ -15,6 +15,10 @@ from api_gateway.app.utils import cache_ttl
 router = APIRouter(prefix='/store', tags=['store'])
 
 STORAGE_REDIRECT_TTL = 3600
+
+
+class ComputationInfoResponse(ComputationInfo):
+    status: ComputationState
 
 
 @router.get(
@@ -41,12 +45,13 @@ def fetch_icon(plugin_id: str, request: Request) -> RedirectResponse:
     description='The metadata lists a summary of the input parameters and additional info about the computation.',
 )
 @cache(expire=cache_ttl(60))
-async def fetch_metadata(correlation_uuid: UUID, request: Request) -> ComputationInfo:
+async def fetch_metadata(correlation_uuid: UUID, request: Request) -> ComputationInfoResponse:
     computation_info = request.app.state.platform.backend_db.read_computation(correlation_uuid=correlation_uuid)
 
     if computation_info:
-        computation_info.status, _ = _extract_computation_status(correlation_uuid, request)
-        return computation_info
+        status, _ = _extract_computation_status(correlation_uuid, request)
+        computation_info_response = ComputationInfoResponse(**computation_info.model_dump(), status=status)
+        return computation_info_response
     else:
         raise HTTPException(status_code=404, detail=f'The requested run {correlation_uuid} is unknown.')
 

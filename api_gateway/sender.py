@@ -15,7 +15,7 @@ from climatoology.base.baseoperator import AoiProperties
 from climatoology.base.plugin_info import DEFAULT_LANGUAGE, PluginInfoFinal
 from climatoology.store.database.database import BackendDatabase
 from climatoology.store.exception import InfoNotReceivedError
-from climatoology.store.object_store import MinioStorage, Storage
+from climatoology.store.object_store import S3Storage, Storage
 from fastapi_cache import Coder
 from ordered_set import OrderedSet
 from pydantic import ValidationError
@@ -92,13 +92,13 @@ class CelerySender:
 
     @staticmethod
     def construct_storage(settings: CABaseSettings) -> Storage:
-        return MinioStorage(
-            host=settings.minio_host,
-            port=settings.minio_port,
-            access_key=settings.minio_access_key,
-            secret_key=settings.minio_secret_key,
-            bucket=settings.minio_bucket,
-            secure=settings.minio_secure,
+        return S3Storage(
+            host=settings.s3_host,
+            port=settings.s3_port,
+            access_key=settings.s3_access_key,
+            secret_key=settings.s3_secret_key,
+            bucket=settings.s3_bucket,
+            secure=settings.s3_secure,
         )
 
     def list_active_plugins(self) -> Set[str]:

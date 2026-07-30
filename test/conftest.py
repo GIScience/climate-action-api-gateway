@@ -10,6 +10,9 @@ from starlette.testclient import TestClient
 from api_gateway.app.settings import GatewaySettings
 from api_gateway.sender import EXCHANGE_NAME, CelerySender, PluginInfoResponse
 
+with patch('fastapi_cache.decorator.cache', lambda *args, **kwargs: lambda f: f):
+    from api_gateway.app.api import app
+
 pytest_plugins = (
     'celery.contrib.pytest',
     'climatoology.test.fixtures.base',
@@ -24,8 +27,6 @@ pytest_plugins = (
 
 @pytest.fixture
 def mocked_client(default_sender) -> Generator[TestClient, None, None]:
-    with patch('fastapi_cache.decorator.cache', lambda *args, **kwargs: lambda f: f):
-        from api_gateway.app.api import app
     app.state.settings = GatewaySettings()
     app.state.platform = default_sender
     client = TestClient(app)
