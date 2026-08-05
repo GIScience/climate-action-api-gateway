@@ -7,7 +7,7 @@ from celery import Celery
 from celery.exceptions import TaskRevokedError
 from celery.result import AsyncResult
 from climatoology.app.plugin import EXCHANGE_NAME, _create_plugin
-from climatoology.test.fixtures.database import connection_to_string
+from climatoology.test.utils import connection_to_string
 from kombu.transport.pyamqp import Message
 
 from api_gateway.dlq_handler import CeleryDLQHandler

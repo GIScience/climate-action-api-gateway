@@ -7,11 +7,11 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 
 ## [Unreleased](https://gitlab.heigit.org/climate-action/api-gateway/-/compare/2.8.0...main)
 
-## [2.8.0](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.8.0) - 2026-07-30
+## [2.8.0](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.8.0) - 2026-08-05
 
 ### Changed
 
-- `climatoology` version updated to 7.3.0
+- `climatoology` version updated to 7.3.1
 - `CelerySender.request_info` now already returns a `PluginInfoResponse` object, to align with the `list_all_plugins`
   method, so the API endpoint no longer needs to do the status check after receiving the info
 - `GatewaySettings` now includes `dlq_worker_concurrency`, default=1, for the DLQ handler celery
