@@ -6,6 +6,7 @@ from climatoology.base.artifact import ArtifactEnriched
 from climatoology.base.computation import ComputationInfo, ComputationState
 from fastapi import APIRouter, HTTPException
 from fastapi_cache.decorator import cache
+from pydantic import BaseModel, HttpUrl
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
 
@@ -72,14 +73,17 @@ async def list_artifacts(correlation_uuid: UUID, request: Request) -> List[Artif
     return artifact_list
 
 
+class ResourceResponse(BaseModel):
+    go_to: HttpUrl
+
+
 @router.get(
     path='/{correlation_uuid}/{store_id}',
     summary='Fetch a pre-signed URL pointing to the requested artifact.',
     description='The store_id can be parsed from the listing endpoint.',
 )
-# It would be nice if this was cached but if we do so breaks the front-end where the 307 is cached as a 200
-# https://gitlab.heigit.org/climate-action/api-gateway/-/issues/24
-def fetch_artifact(correlation_uuid: UUID, store_id: str, request: Request) -> RedirectResponse:
+@cache(expire=cache_ttl(STORAGE_REDIRECT_TTL))
+def fetch_artifact(correlation_uuid: UUID, store_id: str, request: Request) -> ResourceResponse:
     computation_uuid = request.app.state.platform.backend_db.resolve_computation_id(correlation_uuid)
     signed_url = request.app.state.platform.storage.get_artifact_url(
         correlation_uuid=computation_uuid, store_id=store_id, expires=timedelta(seconds=STORAGE_REDIRECT_TTL + 60)
@@ -89,4 +93,4 @@ def fetch_artifact(correlation_uuid: UUID, store_id: str, request: Request) -> R
         raise HTTPException(
             status_code=404, detail=f'The requested element {correlation_uuid}/{store_id} does not exist!'
         )
-    return RedirectResponse(url=signed_url)
+    return ResourceResponse(go_to=signed_url)

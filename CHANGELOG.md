@@ -7,6 +7,13 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 
 ## [Unreleased](https://gitlab.heigit.org/climate-action/api-gateway/-/compare/2.8.0...main)
 
+### Changed
+
+- the `fetch_artifact` endpoint now returns a JSON object containing `{"go_to": "<redirect_url>"}` instead of a
+  `RedirectResponse`.
+  This allows the client to set custom headers when fetching the resource
+  ([#69](https://gitlab.heigit.org/climate-action/api-gateway/-/work_items/69)).
+
 ## [2.8.0](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.8.0) - 2026-08-05
 
 ### Changed

@@ -55,7 +55,8 @@ def test_fetch_artifact(mocked_client, general_uuid, deduplicated_uuid, backend_
 
     response = mocked_client.get(f'/store/{deduplicated_uuid}/{store_id}', follow_redirects=False)
 
-    assert response.status_code == 307
+    assert response.status_code == 200
+    data = response.json()
 
-    url, params = response.headers['location'].split('?')
+    url, params = data['go_to'].split('?')
     assert url == f'https://test.host:1234/s3_test_bucket/{general_uuid}/{store_id}'
