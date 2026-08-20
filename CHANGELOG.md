@@ -9,6 +9,7 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 
 ### Changed
 
+- Updated climatoology to `7.4.0`
 - the `fetch_artifact` endpoint now returns a JSON object containing `{"go_to": "<redirect_url>"}` instead of a
   `RedirectResponse`.
   This allows the client to set custom headers when fetching the resource
