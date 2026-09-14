@@ -7,6 +7,7 @@ import yaml
 from fastapi import FastAPI
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
+from starlette.middleware.gzip import GZipMiddleware
 
 import api_gateway
 from api_gateway.app.route import computation, health, metadata, plugin, store
@@ -16,7 +17,6 @@ from api_gateway.sender import CelerySender
 settings = GatewaySettings()
 
 log = logging.getLogger(__name__)
-
 
 tags_metadata = [
     {
@@ -73,13 +73,13 @@ app = FastAPI(
     redoc_url=None if settings.disable_swagger else '/redoc',
 )
 
+app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=6)
 
 app.include_router(health.router)
 app.include_router(metadata.router)
 app.include_router(plugin.router)
 app.include_router(computation.router)
 app.include_router(store.router)
-
 
 if __name__ == '__main__':
     log_config = settings.app_config_dir / 'logging/app/logging.yaml'

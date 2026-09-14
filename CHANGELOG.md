@@ -7,6 +7,10 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 
 ## [Unreleased](https://gitlab.heigit.org/climate-action/api-gateway/-/compare/2.9.0...main)
 
+### Added
+
+- support for `gzip` encoded responses ([#79](https://gitlab.heigit.org/climate-action/api-gateway/-/work_items/79)).
+
 ## [2.9.0](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.9.0) - 2026-09-10
 
 ### Changed

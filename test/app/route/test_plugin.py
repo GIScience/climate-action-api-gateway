@@ -80,6 +80,16 @@ def test_get_plugin(mocked_client, default_info_response, default_plugin):
     assert response == default_info_response.model_dump(mode='json')
 
 
+def test_get_plugin_compressed_response(mocked_client, default_plugin):
+    response = mocked_client.get('/plugin/test_plugin')
+    assert response.status_code == 200
+    assert response.headers.get('content-encoding') == 'gzip'
+
+    response = mocked_client.get('/plugin/test_plugin', headers={'Accept-Encoding': 'application/json'})
+    assert response.status_code == 200
+    assert response.headers.get('content-encoding') is None
+
+
 def test_get_plugin_by_language(mocked_client, default_info_response, default_plugin):
     response = mocked_client.get('/plugin/test_plugin', params={'lang': 'de'})
 
