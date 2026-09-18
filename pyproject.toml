@@ -30,6 +30,10 @@ dependencies = [
 [project.urls]
 repository = "https://gitlab.heigit.org/climate-action/api-gateway"
 
+[project.scripts]
+api-gateway = "api_gateway.app.api:start"
+dlq = "api_gateway.dlq_handler:start"
+
 [dependency-groups]
 dev = [
     "pre-commit (>=4.6.0,<5.0.0)",

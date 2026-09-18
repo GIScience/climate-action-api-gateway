@@ -57,9 +57,13 @@ class CeleryDLQHandler:
         message.ack()
 
 
-if __name__ == '__main__':
+def start():
     base_settings = CABaseSettings()
     logging.basicConfig(level=base_settings.log_level)
 
     dlq_handler = CeleryDLQHandler()
     dlq_handler.celery_app.start(['worker', '-n', f'{dlq_handler.celery_app.main}%h', '-l', base_settings.log_level])
+
+
+if __name__ == '__main__':
+    start()

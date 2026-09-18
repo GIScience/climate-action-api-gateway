@@ -61,12 +61,12 @@ the [climatoology documentation](https://gitlab.heigit.org/climate-action/climat
 #### Docker
 
 If you have the docker container available,
-run `docker run --env-file .env.base --entrypoint ./run-alembic.sh repo.heigit.org/climate-action/api-gateway:devel upgrade head`
+run `docker run --env-file .env.base  --network=host --entrypoint ./run-alembic.sh repo.heigit.org/climate-action/api-gateway:devel upgrade head`
 
 #### Local
 
 To run the database migrations locally, first create a `.env.migration` file containing the database connection
-specification (as per [`.env.base_template`](.env.base_template)), then run `./run-alembic.sh upgrade head`.
+specification (as per [`.env.base_template`](.env.base_template)), then run `poetry run ./run-alembic.sh upgrade head`.
 
 ### Managing expired tasks (DLQ)
 

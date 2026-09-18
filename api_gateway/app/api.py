@@ -81,7 +81,8 @@ app.include_router(plugin.router)
 app.include_router(computation.router)
 app.include_router(store.router)
 
-if __name__ == '__main__':
+
+def start():
     log_config = settings.app_config_dir / 'logging/app/logging.yaml'
     logging.basicConfig(level=settings.log_level.upper())
     with open(log_config) as file:
@@ -96,3 +97,7 @@ if __name__ == '__main__':
         log_config=str(log_config),
         log_level=settings.log_level.lower(),
     )
+
+
+if __name__ == '__main__':
+    start()
