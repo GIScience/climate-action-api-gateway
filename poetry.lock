@@ -1023,6 +1023,48 @@ standard = ["fastapi-cloud-cli (>=0.1.1)", "uvicorn[standard] (>=0.15.0)"]
 standard-no-fastapi-cloud-cli = ["uvicorn[standard] (>=0.15.0)"]
 
 [[package]]
+name = "fastapi-pagination"
+version = "0.15.16"
+description = "FastAPI pagination"
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "fastapi_pagination-0.15.16-py3-none-any.whl", hash = "sha256:86dc73620812d47c297a7b8baca4eba2bac5d3f1d73aa75dc6e3bb12c0b803f7"},
+    {file = "fastapi_pagination-0.15.16.tar.gz", hash = "sha256:739a4e904729dc01e03ce95e260ed9be050d48a3659be8463e5c4fcdd0cf25b0"},
+]
+
+[package.dependencies]
+fastapi = ">=0.93.0"
+pydantic = ">=1.9.1"
+sqlakeyset = {version = ">=2.0.1680321678", optional = true, markers = "extra == \"sqlalchemy\""}
+sqlalchemy = {version = ">=1.3.20", optional = true, markers = "extra == \"sqlalchemy\""}
+typing-extensions = ">=4.8.0"
+
+[package.extras]
+aiosqlite = ["aiosqlite (>=0.19.0,!=0.22.0,!=0.22.1)"]
+asyncpg = ["asyncpg (>=0.24.0)", "sqlalchemy (>=1.3.20)"]
+beanie = ["beanie (>=2.1.0)"]
+bunnet = ["bunnet (>=1.1.0)"]
+databases = ["databases (>=0.6.0)"]
+django = ["databases (>=0.6.0)", "django (<6.0.0)"]
+elasticsearch = ["elasticsearch-dsl (>=8.13.0)"]
+firestore = ["google-cloud-firestore (>=2.19.0)"]
+mongoengine = ["mongoengine (>=0.23.1)"]
+motor = ["motor (>=3.6.0)"]
+odmantic = ["odmantic (>=1.0.2)"]
+orm = ["databases (>=0.6.0)", "orm (>=0.3.1)"]
+ormar = ["ormar (>=0.21.0)"]
+peewee = ["aiosqlite (>=0.19.0,!=0.22.0,!=0.22.1)", "greenlet", "peewee (>=4.0)"]
+peewee-sync = ["peewee (>=4.0)"]
+piccolo = ["piccolo (>=0.89)"]
+psycopg = ["psycopg[binary] (>=3.3.2)"]
+scylla-driver = ["scylla-driver (>=3.25.6)"]
+sqlalchemy = ["sqlakeyset (>=2.0.1680321678)", "sqlalchemy (>=1.3.20)"]
+sqlmodel = ["sqlakeyset (>=2.0.1680321678)", "sqlmodel (>=0.0.22)"]
+tortoise = ["tortoise-orm (>=0.22.0)"]
+
+[[package]]
 name = "filelock"
 version = "3.29.0"
 description = "A platform independent file lock."
@@ -3551,6 +3593,23 @@ files = [
 ]
 
 [[package]]
+name = "sqlakeyset"
+version = "2.0.1775222100"
+description = "offset-free paging for sqlalchemy"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "sqlakeyset-2.0.1775222100-py3-none-any.whl", hash = "sha256:5004e671ddc7d9ecf105bcbd46c079b314cc6d413db3159e63a3567e51e28fa3"},
+    {file = "sqlakeyset-2.0.1775222100.tar.gz", hash = "sha256:c2988c289181fa3615f3c091308a06001d83fa6ebc0591e7d18e08d8b92ee012"},
+]
+
+[package.dependencies]
+packaging = ">=20.0"
+python-dateutil = ">=2.0"
+sqlalchemy = ">=1.3.11"
+
+[[package]]
 name = "sqlalchemy"
 version = "2.0.52"
 description = "Database Abstraction Library"
@@ -4296,4 +4355,4 @@ test = ["pytest", "pytest-cov"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13.5,<3.14"
-content-hash = "175c73bc101ac172497ab26d68a5339e7ef784b02be5e9dc019fcd4c8c0a03c1"
+content-hash = "f5e82914f27d5c1eafe58ed1d7f79039268ecb23fef394a9f84de09b9583e4c6"

@@ -21,6 +21,10 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
   This allows the client to set custom headers when fetching the resource
   ([#69](https://gitlab.heigit.org/climate-action/api-gateway/-/work_items/69)).
 
+### Added
+
+- **experimental**: `/search` and `/search/centroid` as new endpoints to query specific computations using filter parameters
+
 ## [2.8.0](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.8.0) - 2026-08-05
 
 ### Changed

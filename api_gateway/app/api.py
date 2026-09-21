@@ -7,6 +7,7 @@ import yaml
 from fastapi import FastAPI
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
+from fastapi_pagination import add_pagination
 from starlette.middleware.gzip import GZipMiddleware
 
 import api_gateway
@@ -72,6 +73,7 @@ app = FastAPI(
     docs_url=None if settings.disable_swagger else '/docs',
     redoc_url=None if settings.disable_swagger else '/redoc',
 )
+add_pagination(app)
 
 app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=6)
 

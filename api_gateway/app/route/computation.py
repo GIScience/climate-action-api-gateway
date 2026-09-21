@@ -11,11 +11,13 @@ from fastapi import APIRouter, HTTPException
 from fastapi_cache.decorator import cache
 from starlette.requests import Request
 
+from api_gateway.app.route.search import router as search_router
 from api_gateway.app.utils import cache_ttl
 
 log = logging.getLogger(__name__)
 
 router = APIRouter(prefix='/computation', tags=['computation'])
+router.include_router(search_router)
 
 
 @dataclass
