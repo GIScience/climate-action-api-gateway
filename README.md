@@ -65,8 +65,9 @@ run `docker run --env-file .env.base  --network=host --entrypoint ./run-alembic.
 
 #### Local
 
-To run the database migrations locally, first create a `.env.migration` file containing the database connection
-specification (as per [`.env.base_template`](.env.base_template)), then run `poetry run ./run-alembic.sh upgrade head`.
+To run the database migrations locally, copy [`.env.migration_template`](.env.migration_template) to `.env.migration` and update the DB
+connection variables.
+Then run `poetry run bash ./run-alembic.sh upgrade head`.
 
 ### Managing expired tasks (DLQ)
 
