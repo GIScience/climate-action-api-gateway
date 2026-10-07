@@ -790,7 +790,7 @@ fixtures = ["freezegun (>=1.0.0,<2.0.0)", "moto[s3] (>=5.0.0,<6.0.0)", "pytest (
 type = "git"
 url = "https://gitlab.heigit.org/climate-action/climatoology.git"
 reference = "main"
-resolved_reference = "bb23fbf152dd9c1f2b435f125c49dca2b9d97e67"
+resolved_reference = "49d1189adce67dd99c9e2a7ca7a5f30a4a2b1692"
 
 [[package]]
 name = "colorama"
@@ -4554,4 +4554,4 @@ test = ["pytest", "pytest-cov"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13.5,<3.14"
-content-hash = "6f1e7f5842ef774e0118369eb5d246e2acabc50acaffbce2746515bd8cf73ea5"
+content-hash = "cd1842672806883836e4f608d68e214eefeb174d4897928c65a361546ea34430"
