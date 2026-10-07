@@ -183,17 +183,22 @@ dev = ["backports.zoneinfo ; python_version < \"3.9\"", "freezegun (>=1.0,<2.0)"
 
 [[package]]
 name = "bibtexparser"
-version = "1.4.4"
+version = "2.1.0"
 description = "Bibtex parser for python 3"
 optional = false
-python-versions = "*"
+python-versions = ">=3.10"
 groups = ["main", "test"]
 files = [
-    {file = "bibtexparser-1.4.4.tar.gz", hash = "sha256:093b6c824f7a71d3a748867c4057b71f77c55b8dbc07efc993b781771520d8fb"},
+    {file = "bibtexparser-2.1.0-py3-none-any.whl", hash = "sha256:3b4b1de50ce45ee9091ccca72e1efc8732ab3ef615b70bcecc537c17cd84753e"},
+    {file = "bibtexparser-2.1.0.tar.gz", hash = "sha256:9f48851eef4693cb7ef6897f7628966c5d0ef49b6403b13a862679a4c313d176"},
 ]
 
 [package.dependencies]
-pyparsing = ">=2.0.3"
+pylatexenc = ">=2.10,<3.0"
+
+[package.extras]
+docs = ["sphinx"]
+test = ["jupyter", "pytest", "pytest-cov", "pytest-xdist"]
 
 [[package]]
 name = "billiard"
@@ -728,64 +733,64 @@ test = ["pytest-cov"]
 
 [[package]]
 name = "climatoology"
-version = "7.4.1"
+version = "7.4.2"
 description = "This package provides the underlying functionality to implement Climate Action Operators and Plugins and to interact with the backend."
 optional = false
-python-versions = ">=3.13.5,<3.14"
+python-versions = ">=3.13,<3.14"
 groups = ["main", "test"]
 files = []
 develop = false
 
 [package.dependencies]
 affine = ">=3.0.0,<4.0.0"
-alembic = ">=1.16.1,<2.0.0"
-alembic-postgresql-enum = ">=1.7.0,<2.0.0"
-alembic-utils = ">=0.8.8,<0.9.0"
-babel = ">=2.18.0,<3.0.0"
-bibtexparser = ">=1.4.0,<2.0.0"
-boto3 = ">=1.43.51,<2.0.0"
-celery = {version = ">=5.4.0,<6.0.0", extras = ["sqlalchemy"]}
-freezegun = {version = ">=1.5.5,<2.0.0", optional = true}
+alembic = ">=1.0.0,<2.0.0"
+alembic-postgresql-enum = ">=1.0.0,<2.0.0"
+alembic-utils = ">=0.8.0,<0.9.0"
+babel = ">=2.0.0,<3.0.0"
+bibtexparser = ">=2.0.0,<3.0.0"
+boto3 = ">=1.0.0,<2.0.0"
+celery = {version = ">=5.0.0,<6.0.0", extras = ["sqlalchemy"]}
+freezegun = {version = ">=1.0.0,<2.0.0", optional = true}
 geoalchemy2 = ">=0.20.0,<0.21.0"
 geojson-pydantic = ">=2.0.0,<3.0.0"
-geopandas = ">=1.0.1,<2.0.0"
-kombu = ">=5.6.2,<6.0.0"
-moto = {version = ">=5.2.2,<6.0.0", extras = ["s3"], optional = true}
-numpy = ">=2.4.4,<3.0.0"
-pandas = ">=2.1.4,<4.0.0"
-pillow = ">=12.2.0,<13.0.0"
-plotly = ">=6.0.0,<7.0.0"
-pyarrow = ">=25.0.0,<25.1.0"
-pycountry = ">=26.2.16,<27.0.0"
-pydantic = ">=2.8.2,<3.0.0"
-pydantic-extra-types = ">=2.1.0,<3.0.0"
-pydantic-settings = ">=2.6.0,<3.0.0"
-pydantic-shapely = ">=1.0.0a5,<2.0.0"
-pyproj = ">=3.7.2,<4.0.0"
-pytest = {version = ">=9.1.1,<10.0.0", optional = true}
-pytest-alembic = {version = ">=0.12.1,<0.13.0", optional = true}
-pytest-mock = {version = ">=3.15.1,<4.0.0", optional = true}
+geopandas = ">=1.0.0,<2.0.0"
+kombu = ">=5.0.0,<6.0.0"
+moto = {version = ">=5.0.0,<6.0.0", extras = ["s3"], optional = true}
+numpy = ">=2.0.0,<3.0.0"
+pandas = ">=2.0.0,<4.0.0"
+pillow = ">=12.0.0,<13.0.0"
+plotly = ">=7.0.0,<8.0.0"
+pyarrow = ">=25.0.0,<26.0.0"
+pycountry = ">=26.0.0,<27.0.0"
+pydantic = ">=2.0.0,<3.0.0"
+pydantic-extra-types = ">=2.0.0,<3.0.0"
+pydantic-settings = ">=2.0.0,<3.0.0"
+pydantic-shapely = ">=1.0.0a1,<2.0.0"
+pyproj = ">=3.0.0,<4.0.0"
+pytest = {version = ">=9.0.0,<10.0.0", optional = true}
+pytest-alembic = {version = ">=0.13.0,<0.14.0", optional = true}
+pytest-mock = {version = ">=3.0.0,<4.0.0", optional = true}
 pytest-postgresql = {version = ">=9.0.0,<10.0.0", optional = true}
-rasterio = ">=1.3.11,<2.0.0"
+rasterio = ">=1.0.0,<2.0.0"
 rasterstats = ">=0.21.0,<0.22.0"
-requests = ">=2.31.0,<3.0.0"
-responses = {version = ">=0.26.2,<0.27.0", optional = true}
-semver = ">=3.0.1,<4.0.0"
-sentinelhub = ">=3.9.1,<4.0.0"
-shapely = ">=2.1.2,<3.0.0"
-sqlalchemy = {version = ">=2.0.40,<3.0.0", extras = ["postgresql-psycopgbinary"]}
+requests = ">=2.0.0,<3.0.0"
+responses = {version = ">=0.26.0,<0.27.0", optional = true}
+semver = ">=3.0.0,<4.0.0"
+sentinelhub = ">=3.0.0,<4.0.0"
+shapely = ">=2.0.0,<3.0.0"
+sqlalchemy = {version = ">=2.0.0,<3.0.0", extras = ["postgresql-psycopgbinary"]}
 sqlalchemy-utils = ">=0.42.0,<0.43.0"
-tqdm = ">=4.66.1,<5.0.0"
-urllib3 = ">=2.6.3,<3.0.0"
+tqdm = ">=4.0.0,<5.0.0"
+urllib3 = ">=2.0.0,<3.0.0"
 
 [package.extras]
-fixtures = ["freezegun (>=1.5.5,<2.0.0)", "moto[s3] (>=5.2.2,<6.0.0)", "pytest (>=9.1.1,<10.0.0)", "pytest-alembic (>=0.12.1,<0.13.0)", "pytest-mock (>=3.15.1,<4.0.0)", "pytest-postgresql (>=9.0.0,<10.0.0)", "responses (>=0.26.2,<0.27.0)"]
+fixtures = ["freezegun (>=1.0.0,<2.0.0)", "moto[s3] (>=5.0.0,<6.0.0)", "pytest (>=9.0.0,<10.0.0)", "pytest-alembic (>=0.13.0,<0.14.0)", "pytest-mock (>=3.0.0,<4.0.0)", "pytest-postgresql (>=9.0.0,<10.0.0)", "responses (>=0.26.0,<0.27.0)"]
 
 [package.source]
 type = "git"
 url = "https://gitlab.heigit.org/climate-action/climatoology.git"
-reference = "7.4.1"
-resolved_reference = "db8c3bee3f5450b61d2075e31e9c2b02fae10f4b"
+reference = "7.4.2"
+resolved_reference = "17d5e1fee924f3cce182ef27cc481d8b2df68822"
 
 [[package]]
 name = "colorama"
@@ -2320,14 +2325,14 @@ files = [
 
 [[package]]
 name = "plotly"
-version = "6.9.0"
+version = "7.1.0"
 description = "An open-source interactive data visualization library for Python"
 optional = false
 python-versions = ">=3.8"
 groups = ["main", "test"]
 files = [
-    {file = "plotly-6.9.0-py3-none-any.whl", hash = "sha256:36bebe2f1bb13884774fe61689c329071446f6ce4a8927fb1f0d6fb24f581236"},
-    {file = "plotly-6.9.0.tar.gz", hash = "sha256:967ad33e8c704fed051800d11d985eb206a9c795c14206b30a6f463ed9c67d0d"},
+    {file = "plotly-7.1.0-py3-none-any.whl", hash = "sha256:dbb7fa18afce40d0a8e80d1bf162eceb3faa0ce5a77fe741ad09a74cf78f53f3"},
+    {file = "plotly-7.1.0.tar.gz", hash = "sha256:f860166a4a3d78c69cb1f4a15f28a5c8283eade98a282a698f3bb853a449ace5"},
 ]
 
 [package.dependencies]
@@ -2335,10 +2340,11 @@ narwhals = ">=1.15.1"
 packaging = "*"
 
 [package.extras]
-dev = ["anywidget", "build", "colorcet", "fiona (<=1.9.6) ; python_version <= \"3.8\"", "geopandas", "inflect", "jupyterlab", "kaleido (>=1.3.0)", "numpy (>=1.22)", "orjson", "pandas", "pdfrw", "pillow", "plotly-geo", "polars[timezone]", "pyarrow", "pyshp", "pytest", "pytz", "requests", "ruff (==0.11.12)", "scikit-image", "scipy", "shapely", "statsmodels", "vaex ; python_version <= \"3.9\"", "xarray"]
-dev-build = ["build", "jupyterlab", "pytest", "requests", "ruff (==0.11.12)"]
+dev = ["anywidget", "build", "colorcet", "fiona (<=1.9.6) ; python_version <= \"3.8\"", "geopandas", "inflect", "jupyter-builder", "jupyterlab", "kaleido (>=1.3.0)", "numpy (>=1.22)", "orjson", "pandas", "pdfrw", "pillow", "polars[timezone]", "pyarrow", "pytest", "pytz", "requests", "ruff (==0.11.12)", "scikit-image", "scipy", "sphinx-gallery", "statsmodels", "vaex ; python_version <= \"3.9\"", "xarray"]
+dev-build = ["build", "jupyter-builder", "pytest", "requests", "ruff (==0.11.12)"]
+dev-codegen = ["inflect", "pytest", "requests", "ruff (==0.11.12)"]
 dev-core = ["pytest", "requests", "ruff (==0.11.12)"]
-dev-optional = ["anywidget", "build", "colorcet", "fiona (<=1.9.6) ; python_version <= \"3.8\"", "geopandas", "inflect", "jupyterlab", "kaleido (>=1.3.0)", "numpy (>=1.22)", "orjson", "pandas", "pdfrw", "pillow", "plotly-geo", "polars[timezone]", "pyarrow", "pyshp", "pytest", "pytz", "requests", "ruff (==0.11.12)", "scikit-image", "scipy", "shapely", "statsmodels", "vaex ; python_version <= \"3.9\"", "xarray"]
+dev-optional = ["anywidget", "build", "colorcet", "fiona (<=1.9.6) ; python_version <= \"3.8\"", "geopandas", "inflect", "jupyter-builder", "jupyterlab", "kaleido (>=1.3.0)", "numpy (>=1.22)", "orjson", "pandas", "pdfrw", "pillow", "polars[timezone]", "pyarrow", "pytest", "pytz", "requests", "ruff (==0.11.12)", "scikit-image", "scipy", "sphinx-gallery", "statsmodels", "vaex ; python_version <= \"3.9\"", "xarray"]
 dev-pandas1 = ["numpy (>=1,<2)", "pandas (>=1,<2)", "setuptools (<82)"]
 dev-pandas2 = ["pandas (>=2,<3)"]
 dev-pandas3 = ["pandas (>=3) ; python_version >= \"3.11\""]
@@ -2874,6 +2880,18 @@ files = [
 windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
+name = "pylatexenc"
+version = "2.11"
+description = "Simple LaTeX parser providing latex-to-unicode and unicode-to-latex conversion"
+optional = false
+python-versions = "*"
+groups = ["main", "test"]
+files = [
+    {file = "pylatexenc-2.11-py2.py3-none-any.whl", hash = "sha256:e78e7391d6c104f1ed150e21cfaa58016cdb50aa54406a2eecb793649ffdfdd0"},
+    {file = "pylatexenc-2.11.tar.gz", hash = "sha256:305a072a99ce736246049c9da05841b9d718c0f7ea8888f5f596cf15cb621053"},
+]
+
+[[package]]
 name = "pyogrio"
 version = "0.13.0"
 description = "Vectorized spatial vector file format I/O using GDAL/OGR"
@@ -3020,20 +3038,20 @@ dev = ["argcomplete", "attrs (>=19.2)", "hypothesis (>=3.56)", "mock", "requests
 
 [[package]]
 name = "pytest-alembic"
-version = "0.12.1"
+version = "0.13.1"
 description = "A pytest plugin for verifying alembic migrations."
 optional = false
-python-versions = "<4,>=3.9"
+python-versions = ">=3.10"
 groups = ["test"]
 files = [
-    {file = "pytest_alembic-0.12.1-py3-none-any.whl", hash = "sha256:d0d6be79f1c597278fbeda08c5558e7b8770af099521b0aa164e0df4aed945da"},
-    {file = "pytest_alembic-0.12.1.tar.gz", hash = "sha256:4e2b477d93464d0cfe80487fdf63922bfd22f29153ca980c1bccf1dbf833cf12"},
+    {file = "pytest_alembic-0.13.1-py3-none-any.whl", hash = "sha256:141b410c2d338d98401981dc4f8a848ea46c2c5c46dae106f1bcbed33dccdc47"},
+    {file = "pytest_alembic-0.13.1.tar.gz", hash = "sha256:96a54ec76d4704fffb433880c5a84f5c3ea5980bb3f6509d868fef40e6e9a79f"},
 ]
 
 [package.dependencies]
-alembic = "*"
+alembic = ">=1.9"
 pytest = ">=7.0"
-sqlalchemy = "*"
+sqlalchemy = ">=1.4"
 
 [[package]]
 name = "pytest-cov"
@@ -4499,4 +4517,4 @@ test = ["pytest", "pytest-cov"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13.5,<3.14"
-content-hash = "9e666d18131526bd4c9e512b6da44fd0c125ff2cc385ebf9c1074f2703e384b5"
+content-hash = "828855d5699245b58b3f791f4f40eaa951243b08d2443ab4f6072817cdc22d04"

@@ -5,11 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project mostly adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://gitlab.heigit.org/climate-action/api-gateway/-/compare/2.9.0...main)
+## [Unreleased](https://gitlab.heigit.org/climate-action/api-gateway/-/compare/2.9.1...main)
 
-### Added
+## [2.9.1](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.9.1) - 2026-10-07
 
-- support for `gzip` encoded responses ([#79](https://gitlab.heigit.org/climate-action/api-gateway/-/work_items/79)).
+### Fixed
+
+- support for `gzip` encoded responses ([#72](https://gitlab.heigit.org/climate-action/api-gateway/-/work_items/72)).
+- setting the `ContentDisposition` header in presigned URLs via an update of climatoology to v7.4.2
 
 ## [2.9.0](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.9.0) - 2026-09-10
 
@@ -23,7 +26,8 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 
 ### Added
 
-- **experimental**: `/search` and `/search/centroid` as new endpoints to query specific computations using filter parameters
+- **experimental**: `/search` and `/search/centroid` as new endpoints to query specific computations using filter
+  parameters ([#50](https://gitlab.heigit.org/climate-action/api-gateway/-/work_items/50))
 
 ## [2.8.0](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.8.0) - 2026-08-05
 
