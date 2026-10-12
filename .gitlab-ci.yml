@@ -13,7 +13,7 @@ unit_tests:
   image:
     name: python:3.13
   services:
-    - name: postgis/postgis:17-3.5
+    - name: postgis/postgis:18-3.6
       alias: postgres
   variables:
     PRE_COMMIT_HOME: "$CI_PROJECT_DIR/.cache/pre-commit"
@@ -23,7 +23,6 @@ unit_tests:
     POSTGRES_DB: test_db
     POSTGRES_USER: username
     POSTGRES_PASSWORD: password
-    POSTGRES_VERSION: 17
     POSTGRES_HOST_AUTH_METHOD: trust
   cache:
     key: $CI_COMMIT_REF_NAME
@@ -33,7 +32,7 @@ unit_tests:
       - .venv
   before_script:
     - python3 -m venv $POETRY_HOME
-    - $POETRY_HOME/bin/pip install poetry==2.4.1
+    - $POETRY_HOME/bin/pip install poetry==2.5.1
     - export PATH="$PATH:$POETRY_HOME/bin"
     - poetry config virtualenvs.in-project true
     - poetry sync
