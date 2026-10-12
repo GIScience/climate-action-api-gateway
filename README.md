@@ -21,8 +21,8 @@ the [climate action frontend/web-app](https://gitlab.heigit.org/climate-action/w
 The API is embedded in a full event-driven architecture.
 All interaction with that architecture is provided by
 the [climatoology](https://gitlab.heigit.org/climate-action/climatoology) package.
-It requires multiple services such as [minIO](https://min.io/) and [RabbitMQ](https://www.rabbitmq.com/) to be available
-and the respective environment variables to be set.
+It requires multiple services such as an [S3](https://rustfs.com/) object store and
+[RabbitMQ](https://www.rabbitmq.com/) to be available and the respective environment variables to be set.
 The simplest way to do so, is using docker.
 You can use the [infrastructure repository](https://gitlab.heigit.org/climate-action/infrastructure) to set up the
 architecture.
@@ -144,8 +144,8 @@ docker build . \
 ### Further Optional Parameters
 
 | env var                    | description                                             |
-| -------------------------- | ------------------------------------------------------- |
-| MINIO_SECURE               | set to True to enable SSL in Minio connections          |
+|----------------------------|---------------------------------------------------------|
+| S3_SECURE                  | set to False to disable SSL in S3 connections           |
 | FILE_CACHE                 | location where files are temporarily stored             |
 | API_GATEWAY_APP_CONFIG_DIR | The directory holding configuration files               |
 | API_GATEWAY_API_PORT       | The port, the api should start under                    |
