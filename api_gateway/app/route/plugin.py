@@ -1,11 +1,12 @@
 import logging
 import uuid
 from dataclasses import dataclass
-from typing import Annotated, List
+from typing import Annotated, List, Optional
 from uuid import UUID
 
 import geojson_pydantic
 from climatoology.app.exception import VersionMismatchError
+from climatoology.base import PydanticSemver
 from climatoology.base.baseoperator import AoiProperties
 from climatoology.base.plugin_info import DEFAULT_LANGUAGE
 from climatoology.store.exception import InfoNotReceivedError
@@ -41,9 +42,11 @@ async def list_plugins(request: Request, lang: LanguageAlpha2 = DEFAULT_LANGUAGE
 
 @router.get(path='/{plugin_id}', summary='Get information on a specific plugin or check its online status.')
 @cache(expire=cache_ttl(60 * 60), coder=PluginInfoResponse)
-async def get_plugin(plugin_id: str, request: Request, lang: LanguageAlpha2 = DEFAULT_LANGUAGE) -> PluginInfoResponse:
+async def get_plugin(
+    plugin_id: str, request: Request, lang: LanguageAlpha2 = DEFAULT_LANGUAGE, version: Optional[PydanticSemver] = None
+) -> PluginInfoResponse:
     try:
-        info = request.app.state.platform.request_info(plugin_id=plugin_id, lang=lang)
+        info = request.app.state.platform.request_info(plugin_id=plugin_id, lang=lang, version=version)
     except InfoNotReceivedError as e:
         if lang == DEFAULT_LANGUAGE:
             raise HTTPException(status_code=404, detail=f'Plugin {plugin_id} does not exist.') from e

@@ -90,6 +90,19 @@ def test_get_plugin_compressed_response(mocked_client, default_plugin):
     assert response.headers.get('content-encoding') is None
 
 
+def test_get_plugin_specfic_version(mocked_client, default_info_response, default_plugin):
+    response = mocked_client.get('/plugin/test_plugin', params={'version': '1.0.0'})
+
+    assert response.status_code == 404
+
+    response = mocked_client.get('/plugin/test_plugin', params={'version': '3.1.0'})
+
+    assert response.status_code == 200
+
+    response = response.json()
+    assert response == default_info_response.model_dump(mode='json')
+
+
 def test_get_plugin_by_language(mocked_client, default_info_response, default_plugin):
     response = mocked_client.get('/plugin/test_plugin', params={'lang': 'de'})
 

@@ -21,6 +21,7 @@ from ordered_set import OrderedSet
 from pydantic import ValidationError
 from pydantic_extra_types.language_code import LanguageAlpha2
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from semver import Version
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -151,9 +152,11 @@ class CelerySender:
 
         return plugin_infos
 
-    def request_info(self, plugin_id: str, lang: LanguageAlpha2 = DEFAULT_LANGUAGE) -> PluginInfoResponse:
+    def request_info(
+        self, plugin_id: str, lang: LanguageAlpha2 = DEFAULT_LANGUAGE, version: Optional[Version] = None
+    ) -> PluginInfoResponse:
         log.debug(f"Requesting 'info' from {plugin_id}.")
-        info_return = self.backend_db.read_info(plugin_id=plugin_id, language=lang)
+        info_return = self.backend_db.read_info(plugin_id=plugin_id, language=lang, plugin_version=version)
 
         if self.assert_plugin_version and not info_return.library_version.is_compatible(climatoology.__version__):
             # This means that feature releases of climatoology must be deployed on the gateway if they want to be used

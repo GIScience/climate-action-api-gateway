@@ -7,6 +7,11 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 
 ## [Unreleased](https://gitlab.heigit.org/climate-action/api-gateway/-/compare/2.9.1...main)
 
+### Added
+
+- parameter to query the plugin info by version
+  ([#44](https://gitlab.heigit.org/climate-action/api-gateway/-/work_items/44)).
+
 ## [2.9.1](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.9.1) - 2026-10-07
 
 ### Fixed
