@@ -48,7 +48,6 @@ def test_computation_status_revoked_q_time_exceeded(
     }
 
 
-# TODO: remove skip
 @pytest.mark.skip(
     'This test only failes on this branch. I had problems with it in another branch as well. I think it is only due to how we set up the test client. Investigate!'
 )
