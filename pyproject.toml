@@ -35,6 +35,9 @@ repository = "https://gitlab.heigit.org/climate-action/api-gateway"
 api-gateway = "api_gateway.app.api:start"
 dlq = "api_gateway.dlq_handler:start"
 
+[tool.poetry.scripts]
+migration = { reference = "run-alembic.sh", type = "file" }
+
 [dependency-groups]
 dev = [
     "pre-commit (>=4.6.0,<5.0.0)",
