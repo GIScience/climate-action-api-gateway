@@ -93,6 +93,7 @@ class CelerySender:
 
     @staticmethod
     def construct_storage(settings: CABaseSettings) -> Storage:
+        s3_user_agent = settings.s3_user_agent or 'ca-api-gateway'
         return S3Storage(
             host=settings.s3_host,
             port=settings.s3_port,
@@ -100,6 +101,7 @@ class CelerySender:
             secret_key=settings.s3_secret_key,
             bucket=settings.s3_bucket,
             secure=settings.s3_secure,
+            user_agent=s3_user_agent,
         )
 
     def list_active_plugins(self) -> Set[str]:
