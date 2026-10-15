@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 
 from celery.backends.database import TaskExtended
@@ -6,8 +7,13 @@ from climatoology.base.computation import ComputationState
 from climatoology.store.database.database import ComputationLookupTable, ComputationTable
 from climatoology.store.database.models.base import ClimatoologyViewBase
 from pydantic_extra_types.language_code import LanguageAlpha2
-from sqlalchemy import TIMESTAMP, Select, cast, select
+from sqlalchemy import TIMESTAMP, Cast, Select, cast, select
+from sqlalchemy.sql.functions import func
 from sqlalchemy.sql.functions import now as db_now
+
+
+def db_utc_now() -> Cast[datetime]:
+    return cast(func.timezone('UTC', db_now()), TIMESTAMP)
 
 
 class SearchComputationsView(ClimatoologyViewBase):
@@ -30,7 +36,7 @@ class SearchComputationsView(ClimatoologyViewBase):
         .join(TaskExtended, ComputationTable.correlation_uuid == TaskExtended.task_id)
         .join(ComputationLookupTable, ComputationLookupTable.computation_id == ComputationTable.correlation_uuid)
         .where(PluginInfoTable.latest)
-        .where(ComputationTable.valid_until > db_now())
+        .where(ComputationTable.valid_until > db_utc_now())
         .where(TaskExtended.status == ComputationState.SUCCESS)
         .where(ComputationLookupTable.aoi_properties['original_type'].as_string() == 'Boundary')
     )

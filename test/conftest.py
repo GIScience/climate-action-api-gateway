@@ -9,9 +9,9 @@ from climatoology.store.database.models.computation import ComputationLookupTabl
 from kombu import Exchange, Queue
 from sqlalchemy import update
 from sqlalchemy.orm import Session
-from sqlalchemy.sql.functions import now as db_now
 from starlette.testclient import TestClient
 
+from api_gateway.search_view import db_utc_now
 from api_gateway.sender import EXCHANGE_NAME, CelerySender, PluginInfoResponse
 
 with patch('fastapi_cache.decorator.cache', lambda *args, **kwargs: lambda f: f):
@@ -124,7 +124,7 @@ def additional_computations(
         _ = result.get(timeout=5)
 
     with Session(backend_with_computation_successful.engine) as session:
-        session.execute(update(ComputationTable).values(valid_until=db_now() + timedelta(hours=1)))
+        session.execute(update(ComputationTable).values(valid_until=db_utc_now() + timedelta(hours=1)))
         session.execute(update(ComputationLookupTable).values(aoi_properties={'original_type': 'Boundary'}))
         session.commit()
 
@@ -153,7 +153,7 @@ def backend_with_searchable_computations(
         session.execute(
             update(ComputationTable)
             .where(ComputationTable.correlation_uuid == general_uuid)
-            .values(valid_until=db_now() - timedelta(hours=1))
+            .values(valid_until=db_utc_now() - timedelta(hours=1))
         )
 
         # Set the min_zoom level for general_uuid_de so we can check that it was actually set
