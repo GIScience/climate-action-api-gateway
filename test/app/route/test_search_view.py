@@ -1,6 +1,6 @@
 # In the future, the SearchComputationsView may become a part of climatoology directly. Then, these tests would move too.
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from climatoology.store.database.database import ComputationLookupTable, row_to_dict
 from shapely import Point
@@ -18,7 +18,7 @@ def test_search_computations_view(backend_with_searchable_computations, addition
         'aoi_name': 'test_aoi',
         'min_zoom': None,
         'aoi_centroid': Point(0.25, 0.5),
-        'request_ts': datetime(2018, 1, 1, 12, 0),
+        'request_ts': datetime(2018, 1, 1, 12, 0, tzinfo=UTC),
         'language': 'en',
     }
 
