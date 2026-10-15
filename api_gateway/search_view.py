@@ -6,7 +6,7 @@ from climatoology.base.computation import ComputationState
 from climatoology.store.database.database import ComputationLookupTable, ComputationTable
 from climatoology.store.database.models.base import ClimatoologyViewBase
 from pydantic_extra_types.language_code import LanguageAlpha2
-from sqlalchemy import Select, select
+from sqlalchemy import TIMESTAMP, Select, cast, select
 from sqlalchemy.sql.functions import now as db_now
 
 
@@ -53,7 +53,7 @@ class SearchComputationsView(ClimatoologyViewBase):
 
         if ordered:
             search_query = search_query.order_by(
-                SearchComputationsView.request_ts, SearchComputationsView.correlation_uuid
+                cast(SearchComputationsView.request_ts, TIMESTAMP), SearchComputationsView.correlation_uuid
             )
 
         return search_query
