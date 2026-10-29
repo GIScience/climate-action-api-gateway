@@ -99,3 +99,16 @@ def test_search_computations_view_search_for_everything(backend_with_searchable_
         results = result_scalars.fetchall()
 
         assert len(results) == 1
+
+
+def test_search_computations_view_search_for_is_ordered_latest_first(
+    backend_with_searchable_computations, general_uuid_de
+):
+    """Search results are ordered by descending `request_ts`."""
+    with Session(backend_with_searchable_computations.engine) as session:
+        valid_computation_select = SearchComputationsView.search_for()
+        result_scalars = session.scalars(valid_computation_select)
+        results = result_scalars.fetchall()
+
+    timestamps = [result.request_ts for result in results]
+    assert timestamps == sorted(timestamps, reverse=True)

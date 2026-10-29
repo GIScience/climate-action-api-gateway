@@ -53,7 +53,7 @@ class SearchComputationsView(ClimatoologyViewBase):
 
         if ordered:
             search_query = search_query.order_by(
-                SearchComputationsView.request_ts, SearchComputationsView.correlation_uuid
+                SearchComputationsView.request_ts.desc(), SearchComputationsView.correlation_uuid
             )
 
         return search_query

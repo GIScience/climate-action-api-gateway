@@ -1,5 +1,5 @@
 import uuid
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Generator
 from unittest.mock import patch
 
@@ -138,12 +138,12 @@ def backend_with_searchable_computations(
     """
     This fixture returns a database with the following computations:
 
-    | plugin_id   | plugin_version | correlation_uuid           | requested_params | language | min_zoom | valid? |
-    |-------------|----------------|----------------------------|------------------|----------|----------|--------|
-    | test_plugin | 3.1.0          | general_uuid               | {'id': 1}        | 'en'     | -        | no     |
-    | test_plugin | 3.1.0          | general_uuid_de            | {'id': 1}        | 'de'     | 18       | yes    |
-    | test_plugin | 3.1.0          | additional_computations[0] | {'id': 2}        | 'en'     | -        | yes    |
-    | test_plugin | 3.1.0          | additional_computations[1] | {'id': 3}        | 'en'     | -        | yes    |
+    | plugin_id   | plugin_version | correlation_uuid           | requested_params | language | min_zoom | valid? | request_ts                                  |
+    |-------------|----------------|----------------------------|------------------|----------|----------|--------|---------------------------------------------|
+    | test_plugin | 3.1.0          | general_uuid               | {'id': 1}        | 'en'     | -        | no     | mocked datetime.now() (2018-01-01T12:00:00) |
+    | test_plugin | 3.1.0          | general_uuid_de            | {'id': 1}        | 'de'     | 18       | yes    | 2018-01-01T07:00:00                         |
+    | test_plugin | 3.1.0          | additional_computations[0] | {'id': 2}        | 'en'     | -        | yes    | 2018-01-01T02:00:00                         |
+    | test_plugin | 3.1.0          | additional_computations[1] | {'id': 3}        | 'en'     | -        | yes    | mocked dt                                   |
     """
     modified_backend = backend_with_computation_successful
     with Session(modified_backend.engine) as session:
@@ -161,6 +161,18 @@ def backend_with_searchable_computations(
             update(ComputationLookupTable)
             .where(ComputationLookupTable.user_correlation_uuid == general_uuid_de)
             .values(aoi_properties={'original_type': 'Boundary', 'min_zoom': 18})
+        )
+
+        # Slightly vary the request_ts
+        session.execute(
+            update(ComputationLookupTable)
+            .where(ComputationLookupTable.user_correlation_uuid == general_uuid_de)
+            .values(request_ts=datetime.now() - timedelta(hours=5))
+        )
+        session.execute(
+            update(ComputationLookupTable)
+            .where(ComputationLookupTable.user_correlation_uuid == additional_computations[0])
+            .values(request_ts=datetime.now() - timedelta(hours=10))
         )
 
         session.commit()

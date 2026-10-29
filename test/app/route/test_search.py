@@ -16,7 +16,7 @@ def test_search_basic(backend_with_searchable_computations, mocked_client, gener
         'plugin_id': 'test_plugin',
         'aoi_name': 'test_aoi',
         'language': 'de',
-        'request_ts': '2018-01-01T12:00:00',
+        'request_ts': '2018-01-01T07:00:00',
     }
     assert one_expected_item in items
 

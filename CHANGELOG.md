@@ -7,6 +7,11 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 
 ## [Unreleased](https://gitlab.heigit.org/climate-action/api-gateway/-/compare/2.9.1...main)
 
+### Changed
+
+- `search` results are now ordered chronologically descending (starting with newest)
+  ([#82](https://gitlab.heigit.org/climate-action/api-gateway/-/work_items/82)).
+
 ### Added
 
 - parameter to query the plugin info by version
@@ -140,8 +145,8 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 ### Changed
 
 - updated climatoology to version 6.4.0, which includes deduplicating computations
-- Removed `plugin_version` from `get_icon_url()` which is no longer required (
-  see [#155](https://gitlab.heigit.org/climate-action/climatoology/-/issues/155))
+- Removed `plugin_version` from `get_icon_url()` which is no longer required
+  (see [#155](https://gitlab.heigit.org/climate-action/climatoology/-/issues/155))
 - Replaced `ComputationState` with the `CommandComputeStatus` from `climatoology`
 - Response type from `/{correlation_uuid}/state` is now `ClimatoologyStateInfo`, which includes both the state and
   optionally (currently only for `ClimatoologyUserError` or `InputValidationError` results) a message (closes
