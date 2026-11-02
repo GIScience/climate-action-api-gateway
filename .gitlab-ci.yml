@@ -135,6 +135,43 @@ build_release:
         --push \
         .
 
+include:
+  - template: Jobs/Container-Scanning.gitlab-ci.yml
+container_scanning:
+  stage: build
+  needs:
+    - build_staging
+  rules:
+    - !reference [ build_staging, rules ]
+  variables:
+    CS_REGISTRY_USER: "${CI_DOCKER_USER}"
+    CS_REGISTRY_PASSWORD: "${CI_DOCKER_TOKEN}"
+    CS_IMAGE: "${REGISTRY_URL}/${GROUP_NAME}/${CI_PROJECT_NAME}:staging"
+
+test_container_scan_threshold:
+  stage: deploy
+  needs:
+    - container_scanning
+  rules:
+    - !reference [ container_scanning, rules ]
+  image:
+    name: ubuntu:26.04
+  before_script:
+    - apt-get update && apt-get install -y jq
+  script:
+    - vulnerabilities="$(jq '.vulnerabilities | length // 0' "gl-container-scanning-report.json")"
+    - |
+      if [ "$vulnerabilities" -gt "${CS_VULN_ERROR_THRESHOLD:-0}" ]; then
+        echo "ERROR: There are $vulnerabilities vulnerabilities in the built staging image. Try to reduce it below ${CS_VULN_ERROR_THRESHOLD:-0}." && exit 2;
+      elif [ "$vulnerabilities" -gt "${CS_VULN_WARN_THRESHOLD:-0}" ]; then
+        echo "WARN: There are $vulnerabilities vulnerabilities in the built staging image. Try to reduce it below ${CS_VULN_WARN_THRESHOLD:-0}." && exit 1;
+      else
+        echo "INFO: There are $vulnerabilities vulnerabilities in the built staging image." && exit 0;
+      fi
+  allow_failure:
+    exit_codes:
+      - 1
+
 deploy_staging:
   stage: deploy
   tags: [ k8s-kta ]

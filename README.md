@@ -39,7 +39,8 @@ Follow the [database migration instructions](#database-migrations), then start t
 
 and head to [localhost:8000](http://localhost:8000/docs) to check out the results.
 
-Alternatively, you can use the new [FastAPI CLI](https://fastapi.tiangolo.com/fastapi-cli/) to start the api with auto-reload:
+Alternatively, you can use the new [FastAPI CLI](https://fastapi.tiangolo.com/fastapi-cli/) to start the api with
+auto-reload:
 
 ```shell
 poetry run fastapi dev
@@ -61,12 +62,13 @@ the [climatoology documentation](https://gitlab.heigit.org/climate-action/climat
 #### Docker
 
 If you have the docker container available,
-run `docker run --env-file .env.base  --network=host --entrypoint ./run-alembic.sh repo.heigit.org/climate-action/api-gateway:devel upgrade head`
+run
+`docker run --env-file .env.base  --network=host --entrypoint ./run-alembic.sh repo.heigit.org/climate-action/api-gateway:devel upgrade head`
 
 #### Local
 
-To run the database migrations locally, copy [`.env.migration_template`](.env.migration_template) to `.env.migration` and update the DB
-connection variables.
+To run the database migrations locally, copy [`.env.migration_template`](.env.migration_template) to `.env.migration`
+and update the DB connection variables.
 Then run `poetry run bash ./run-alembic.sh upgrade head`.
 
 ### Managing expired tasks (DLQ)
@@ -103,6 +105,32 @@ To get a coverage report of how much of your code is run during testing, execute
 
 To get a more detailed report including which lines in each file are **not** tested,
 run `poetry run pytest --cov --cov-report term-missing`
+
+#### Vulnerabilities
+
+After Docker images are built, the GitLab CI automatically scans for vulnerabilities.
+Configuration of the scan is done via ci-variables.
+Default variables are available on a group level but may be overwritten on a per-project basis.
+In case the check fails, try updating the base image, OS packages and project dependencies, which may immediately
+resolve some vulnerabilities.
+There are no automated actions in place.
+Note that some vulnerabilities may be unavoidable e.g. if they already exist in the latest base image.
+
+To run the scan locally execute
+
+```shell
+docker run \
+  --rm  \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v $HOME/.cache/trivy:/root/.cache/trivy \
+  aquasec/trivy \
+  image \
+  repo.heigit.org/climate-action/plugin-blueprint:devel \
+  --ignore-unfixed \
+  --severity HIGH,CRITICAL
+```
+
+after you built the image.
 
 ### Docker
 
