@@ -15,10 +15,10 @@ def test_fetch_icon(mocked_client):
 
 
 def test_fetch_metadata(
-    mocked_client, deduplicated_uuid, default_computation_info, backend_with_computation_deduplicated
+    mocked_client, deduplicated_uuid, deduplicated_computation_info, backend_with_computation_deduplicated
 ):
     expected_metadata = ComputationInfoResponse(
-        **default_computation_info.model_dump(), status=ComputationState.SUCCESS
+        **deduplicated_computation_info.model_dump(), status=ComputationState.SUCCESS
     ).model_dump(mode='json')
 
     response = mocked_client.get(f'/store/{deduplicated_uuid}/metadata')

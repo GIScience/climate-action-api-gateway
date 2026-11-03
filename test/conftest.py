@@ -4,7 +4,7 @@ from typing import Generator
 from unittest.mock import patch
 
 import pytest
-from climatoology.store.database.database import BackendDatabase
+from climatoology.store.database.database import BackendDatabase, ComputationInfo
 from climatoology.store.database.models.computation import ComputationLookupTable, ComputationTable
 from kombu import Exchange, Queue
 from sqlalchemy import update
@@ -43,17 +43,24 @@ def deduplicated_uuid() -> uuid.UUID:
 
 
 @pytest.fixture
+def deduplicated_computation_info(default_computation_info) -> ComputationInfo:
+    info = default_computation_info.model_copy(deep=True)
+    info.aoi.properties.name = 'deduplicated_aoi'
+    return info
+
+
+@pytest.fixture
 def backend_with_computation_deduplicated(
     backend_with_computation_successful,
-    default_computation_info,
+    deduplicated_computation_info,
     default_plugin_info_final,
     deduplicated_uuid,
     default_plugin_key,
 ) -> BackendDatabase:
     backend_with_computation_successful.register_computation(
         correlation_uuid=deduplicated_uuid,
-        requested_params=default_computation_info.requested_params,
-        aoi=default_computation_info.aoi,
+        requested_params=deduplicated_computation_info.requested_params,
+        aoi=deduplicated_computation_info.aoi,
         plugin_key=default_plugin_key,
         computation_shelf_life=default_plugin_info_final.computation_shelf_life,
     )

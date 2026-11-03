@@ -18,6 +18,10 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
   ([#44](https://gitlab.heigit.org/climate-action/api-gateway/-/work_items/44)).
 - **experimental** image vulnerability scan
 
+### Changed
+
+- use dependency injection (via fastapi `Depends` to always resolve the lookup correlation id)
+
 ## [2.9.1](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.9.1) - 2026-10-07
 
 ### Fixed

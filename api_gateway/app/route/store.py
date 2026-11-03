@@ -10,7 +10,7 @@ from pydantic import BaseModel, HttpUrl
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
 
-from api_gateway.app.route.computation import _extract_computation_status
+from api_gateway.app.route.computation import ResolvedComputationUUID, _extract_computation_status
 from api_gateway.app.utils import cache_ttl
 
 router = APIRouter(prefix='/store', tags=['store'])
@@ -46,15 +46,14 @@ def fetch_icon(plugin_id: str, request: Request) -> RedirectResponse:
     description='The metadata lists a summary of the input parameters and additional info about the computation.',
 )
 @cache(expire=cache_ttl(60))
-async def fetch_metadata(correlation_uuid: UUID, request: Request) -> ComputationInfoResponse:
+async def fetch_metadata(
+    correlation_uuid: UUID, computation_uuid: ResolvedComputationUUID, request: Request
+) -> ComputationInfoResponse:
     computation_info = request.app.state.platform.backend_db.read_computation(correlation_uuid=correlation_uuid)
 
-    if computation_info:
-        status, _ = _extract_computation_status(correlation_uuid, request)
-        computation_info_response = ComputationInfoResponse(**computation_info.model_dump(), status=status)
-        return computation_info_response
-    else:
-        raise HTTPException(status_code=404, detail=f'The requested run {correlation_uuid} is unknown.')
+    status, _ = _extract_computation_status(computation_uuid, request)
+    computation_info_response = ComputationInfoResponse(**computation_info.model_dump(), status=status)
+    return computation_info_response
 
 
 @router.get(
@@ -64,11 +63,8 @@ async def fetch_metadata(correlation_uuid: UUID, request: Request) -> Computatio
     'To receive actual content you need to use the store uuid returned.',
 )
 @cache(expire=cache_ttl(60))
-async def list_artifacts(correlation_uuid: UUID, request: Request) -> List[ArtifactEnriched]:
-    artifact_list = request.app.state.platform.backend_db.list_artifacts(correlation_uuid=correlation_uuid)
-
-    if artifact_list is None:
-        raise HTTPException(status_code=404, detail=f'The requested run {correlation_uuid} is unknown.')
+async def list_artifacts(computation_uuid: ResolvedComputationUUID, request: Request) -> List[ArtifactEnriched]:
+    artifact_list = request.app.state.platform.backend_db.list_artifacts(correlation_uuid=computation_uuid)
 
     return artifact_list
 
@@ -83,14 +79,13 @@ class ResourceResponse(BaseModel):
     description='The store_id can be parsed from the listing endpoint.',
 )
 @cache(expire=cache_ttl(STORAGE_REDIRECT_TTL))
-def fetch_artifact(correlation_uuid: UUID, store_id: str, request: Request) -> ResourceResponse:
-    computation_uuid = request.app.state.platform.backend_db.resolve_computation_id(correlation_uuid)
+def fetch_artifact(computation_uuid: ResolvedComputationUUID, store_id: str, request: Request) -> ResourceResponse:
     signed_url = request.app.state.platform.storage.get_artifact_url(
         correlation_uuid=computation_uuid, store_id=store_id, expires=timedelta(seconds=STORAGE_REDIRECT_TTL + 60)
     )
 
     if not signed_url:
         raise HTTPException(
-            status_code=404, detail=f'The requested element {correlation_uuid}/{store_id} does not exist!'
+            status_code=404, detail=f'The requested element {computation_uuid}/{store_id} does not exist!'
         )
     return ResourceResponse(go_to=signed_url)
