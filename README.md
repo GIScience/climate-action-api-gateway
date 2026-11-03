@@ -111,12 +111,13 @@ run `poetry run pytest --cov --cov-report term-missing`
 After Docker images are built, the GitLab CI automatically scans for vulnerabilities.
 Configuration of the scan is done via ci-variables.
 Default variables are available on a group level but may be overwritten on a per-project basis.
+There are no automated actions in place.
 In case the check fails, try updating the base image, OS packages and project dependencies, which may immediately
 resolve some vulnerabilities.
-There are no automated actions in place.
+Note that you may to need to rebuild the image from scratch (i.e. without cache).
 Note that some vulnerabilities may be unavoidable e.g. if they already exist in the latest base image.
 
-To run the scan locally execute
+To run the scan locally, pull or build the latest image of the plugin, then execute
 
 ```shell
 docker run \
@@ -125,12 +126,12 @@ docker run \
   -v $HOME/.cache/trivy:/root/.cache/trivy \
   aquasec/trivy \
   image \
-  repo.heigit.org/climate-action/plugin-blueprint:devel \
+  repo.heigit.org/climate-action/api-gateway:devel \
   --ignore-unfixed \
   --severity HIGH,CRITICAL
 ```
 
-after you built the image.
+In case the image was improved, you may have to manually push and deploy the new image
 
 ### Docker
 

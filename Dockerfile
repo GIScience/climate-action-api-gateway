@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=python:3.13-slim-bookworm
+ARG BASE_IMAGE=python:3.13-slim-trixie
 
 # Build stage: having a build stage means temp/cache files from the build aren't persisted in the final image
 FROM $BASE_IMAGE AS builder
