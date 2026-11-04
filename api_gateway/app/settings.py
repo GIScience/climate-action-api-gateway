@@ -16,6 +16,9 @@ class GatewaySettings(BaseSettings):
     computation_time_limit: Optional[float] = None
     dlq_worker_concurrency: int = 1
 
+    stream_poll_interval: int = 2  # seconds
+    stream_time_limit: int = 600  # seconds
+
     disable_swagger: bool = False
     disable_caching: bool = False
 

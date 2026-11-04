@@ -1,15 +1,20 @@
+import asyncio
 import logging
+from collections.abc import AsyncIterable
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from typing import Annotated, Tuple
 from uuid import UUID
 
 from celery.exceptions import TaskRevokedError, TimeLimitExceeded
 from celery.result import AsyncResult
+from celery.states import READY_STATES
 from climatoology.base.computation import ComputationState
 from climatoology.base.exception import ClimatoologyUserError, InputValidationError
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.concurrency import run_in_threadpool
+from fastapi.sse import EventSourceResponse
 from fastapi_cache.decorator import cache
-from starlette.requests import Request
 
 from api_gateway.app.route.search import router as search_router
 from api_gateway.app.utils import cache_ttl
@@ -69,3 +74,25 @@ def _extract_computation_status(computation_uuid: UUID, request: Request) -> Tup
 async def get_computation_status(computation_uuid: ResolvedComputationUUID, request: Request) -> ComputationStateInfo:
     state, message = _extract_computation_status(computation_uuid, request)
     return ComputationStateInfo(state=state, message=message)
+
+
+@router.get(path='/{correlation_uuid}/state/stream', response_class=EventSourceResponse)
+async def stream_computation_state(
+    computation_uuid: ResolvedComputationUUID, request: Request
+) -> AsyncIterable[ComputationStateInfo]:
+    deadline = datetime.now() + timedelta(seconds=request.app.state.settings.stream_time_limit)
+
+    state, message = await run_in_threadpool(_extract_computation_status, computation_uuid, request)
+    previous_state = state
+    yield ComputationStateInfo(state=state, message=message)
+
+    while state not in READY_STATES and datetime.now() < deadline:
+        await asyncio.sleep(request.app.state.settings.stream_poll_interval)
+
+        state, message = await run_in_threadpool(_extract_computation_status, computation_uuid, request)
+        if state != previous_state:
+            yield ComputationStateInfo(state=state, message=message)
+            previous_state = state
+
+    if state not in READY_STATES:
+        log.info(f'Closing state stream for {computation_uuid} in state {state}: maximum duration reached')

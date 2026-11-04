@@ -32,8 +32,11 @@ pytest_plugins = (
 @pytest.fixture
 def mocked_client(default_sender) -> Generator[TestClient, None, None]:
     # Adding the default_sender fixture to this text correctly mocks away all backend connections
+
+    # This will run the `configure_dependencies` function of the `app` object
     with TestClient(app) as client:
-        # This will run the `configure_dependencies` function of the `app` object
+        client.app.state.settings.stream_time_limit = 5
+        client.app.state.settings.stream_poll_interval = 0
         yield client
 
 

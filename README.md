@@ -172,11 +172,13 @@ docker build . \
 
 ### Further Optional Parameters
 
-| env var                    | description                                             |
-|----------------------------|---------------------------------------------------------|
-| S3_SECURE                  | set to False to disable SSL in S3 connections           |
-| FILE_CACHE                 | location where files are temporarily stored             |
-| API_GATEWAY_APP_CONFIG_DIR | The directory holding configuration files               |
-| API_GATEWAY_API_PORT       | The port, the api should start under                    |
-| DLQ_WORKER_CONCURRENCY     | The number of workers for the DLQ handler (default = 1) |
-| LOG_LEVEL                  | The api logging level                                   |
+| env var                | description                                                             |
+| ---------------------- | ----------------------------------------------------------------------- |
+| S3_SECURE              | set to False to disable SSL in S3 connections                           |
+| FILE_CACHE             | location where files are temporarily stored                             |
+| APP_CONFIG_DIR         | The directory holding configuration files                               |
+| PORT                   | The port, the api should start under                                    |
+| DLQ_WORKER_CONCURRENCY | The number of workers for the DLQ handler (default = 1)                 |
+| STREAM_POLL_INTERVAL   | The seconds between polling for updates on the computation state stream |
+| STREAM_TIME_LIMIT      | After how many seconds the server will close the stream                 |
+| LOG_LEVEL              | The api logging level                                                   |

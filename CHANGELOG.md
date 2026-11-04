@@ -7,19 +7,18 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 
 ## [Unreleased](https://gitlab.heigit.org/climate-action/api-gateway/-/compare/2.9.1...main)
 
-### Changed
-
-- `search` results are now ordered chronologically descending (starting with newest)
-  ([#82](https://gitlab.heigit.org/climate-action/api-gateway/-/work_items/82)).
-
 ### Added
 
 - parameter to query the plugin info by version
   ([#44](https://gitlab.heigit.org/climate-action/api-gateway/-/work_items/44)).
+- `/computation/{correlation_uuid}/state/stream` endpoint, which is a server-sent event to stream the computation state
+  ([#30](https://gitlab.heigit.org/climate-action/api-gateway/-/work_items/30))
 - **experimental** image vulnerability scan
 
 ### Changed
 
+- `search` results are now ordered chronologically descending (starting with newest)
+  ([#82](https://gitlab.heigit.org/climate-action/api-gateway/-/work_items/82)).
 - use dependency injection (via fastapi `Depends` to always resolve the lookup correlation id)
 
 ## [2.9.1](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.9.1) - 2026-10-07
