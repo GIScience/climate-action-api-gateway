@@ -788,7 +788,7 @@ fixtures = ["freezegun (>=1.0.0,<2.0.0)", "moto[s3] (>=5.0.0,<6.0.0)", "pytest (
 [package.source]
 type = "git"
 url = "https://gitlab.heigit.org/climate-action/climatoology.git"
-reference = "7.6.0"
+reference = "main"
 resolved_reference = "14c6e188fd19ad72ee8bb22e785edff9cd5772ad"
 
 [[package]]
@@ -4706,4 +4706,4 @@ test = ["pytest", "pytest-cov"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13.5,<3.14"
-content-hash = "9421cc8dadbd7356dfc89aefdf39c5e1597721d03ced950273cbe483acbdd006"
+content-hash = "195406050c2bc1c846ba1dea220aa95d4937f1b37531e778041afd5a1eb3973c"
