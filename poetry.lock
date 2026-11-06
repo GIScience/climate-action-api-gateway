@@ -733,7 +733,7 @@ test = ["pytest-cov"]
 
 [[package]]
 name = "climatoology"
-version = "7.5.0"
+version = "7.6.0"
 description = "This package provides the underlying functionality to implement Climate Action Operators and Plugins and to interact with the backend."
 optional = false
 python-versions = ">=3.13,<3.14"
@@ -788,8 +788,8 @@ fixtures = ["freezegun (>=1.0.0,<2.0.0)", "moto[s3] (>=5.0.0,<6.0.0)", "pytest (
 [package.source]
 type = "git"
 url = "https://gitlab.heigit.org/climate-action/climatoology.git"
-reference = "7.5.0"
-resolved_reference = "604aa4cc41f2e31b18ab19e90bef79393bdd070a"
+reference = "7.6.0"
+resolved_reference = "14c6e188fd19ad72ee8bb22e785edff9cd5772ad"
 
 [[package]]
 name = "colorama"
@@ -4706,4 +4706,4 @@ test = ["pytest", "pytest-cov"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13.5,<3.14"
-content-hash = "f93ea411fad46cec0eeec7ad04f14e616f930f9a9db705e826c57198de9021c5"
+content-hash = "9421cc8dadbd7356dfc89aefdf39c5e1597721d03ced950273cbe483acbdd006"
