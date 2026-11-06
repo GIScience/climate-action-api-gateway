@@ -1,8 +1,8 @@
-from datetime import datetime
 from typing import Annotated, Optional
 from uuid import UUID
 
 import geojson_pydantic
+from climatoology.base import UtcDateTime
 from fastapi import APIRouter, HTTPException, Query
 from fastapi_pagination.ext.sqlalchemy import paginate
 from pydantic import BaseModel, Field, model_validator
@@ -25,7 +25,7 @@ class SearchResponse(BaseModel):
     plugin_id: str
     aoi_name: str
     language: LanguageAlpha2
-    request_ts: datetime
+    request_ts: UtcDateTime
 
 
 @router.get('')

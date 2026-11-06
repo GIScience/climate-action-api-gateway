@@ -1,4 +1,4 @@
-from typing import Optional, TypeVar
+from typing import Optional
 
 from fastapi import Query
 from fastapi_pagination.cursor import CursorPage, CursorParams
@@ -25,10 +25,8 @@ def cursor_raw_str_decoder(cp: CursorParams, s: Optional[str]) -> Optional[Curso
     return s
 
 
-T = TypeVar('T')
-
 GatewayCursorPage = CustomizedPage[
-    CursorPage[T],
+    CursorPage,
     UseParamsFields(size=Query(50, ge=1, le=100, description='Page size', alias='page_size')),
     # The FE and various layers that the requests are channeled through can have issues with certain types of encoding.
     # Therefore we have chosen not to encode the cursor at all for now.
