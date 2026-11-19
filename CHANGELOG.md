@@ -7,13 +7,7 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 
 ## [Unreleased](https://gitlab.heigit.org/climate-action/api-gateway/-/compare/2.9.1...main)
 
-### Added
-
-- parameter to query the plugin info by version
-  ([#44](https://gitlab.heigit.org/climate-action/api-gateway/-/work_items/44)).
-- `/computation/{correlation_uuid}/state/stream` endpoint, which is a server-sent event to stream the computation state
-  ([#30](https://gitlab.heigit.org/climate-action/api-gateway/-/work_items/30))
-- **experimental** image vulnerability scan
+## [2.10.0](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.10.0) - 2026-11-19
 
 ### Changed
 
@@ -21,8 +15,15 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
   ([#82](https://gitlab.heigit.org/climate-action/api-gateway/-/work_items/82)).
 - `search` results now only show one element per computation (i.e. ignoring deduplicated ones)
   ([#86](https://gitlab.heigit.org/climate-action/api-gateway/-/work_items/86)).
-- use dependency injection (via fastapi `Depends` to always resolve the lookup correlation id)
+- use dependency injection (via fastapi `Depends`) to always resolve the lookup correlation id
 - the gateway now uses UTC timestamps everywhere except the DB, just like climatoology
+
+### Added
+
+- parameter to query the plugin info by version
+  ([#44](https://gitlab.heigit.org/climate-action/api-gateway/-/work_items/44)).
+- `/computation/{correlation_uuid}/state/stream` endpoint, which is a server-sent event to stream the computation state
+  ([#30](https://gitlab.heigit.org/climate-action/api-gateway/-/work_items/30))
 
 ## [2.9.1](https://gitlab.heigit.org/climate-action/api-gateway/-/releases/2.9.1) - 2026-10-07
 
