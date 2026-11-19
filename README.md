@@ -173,7 +173,7 @@ docker build . \
 ### Further Optional Parameters
 
 | env var                | description                                                             |
-| ---------------------- | ----------------------------------------------------------------------- |
+|------------------------|-------------------------------------------------------------------------|
 | S3_SECURE              | set to False to disable SSL in S3 connections                           |
 | FILE_CACHE             | location where files are temporarily stored                             |
 | APP_CONFIG_DIR         | The directory holding configuration files                               |
