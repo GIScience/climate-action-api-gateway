@@ -19,6 +19,8 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 
 - `search` results are now ordered chronologically descending (starting with newest)
   ([#82](https://gitlab.heigit.org/climate-action/api-gateway/-/work_items/82)).
+- `search` results now only show one element per computation (i.e. ignoring deduplicated ones)
+  ([#86](https://gitlab.heigit.org/climate-action/api-gateway/-/work_items/86)).
 - use dependency injection (via fastapi `Depends` to always resolve the lookup correlation id)
 - the gateway now uses UTC timestamps everywhere except the DB, just like climatoology
 

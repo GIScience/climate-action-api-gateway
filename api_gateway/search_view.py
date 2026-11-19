@@ -7,7 +7,7 @@ from climatoology.base.computation import ComputationState
 from climatoology.store.database.database import ComputationLookupTable, ComputationTable
 from climatoology.store.database.models.base import ClimatoologyViewBase
 from pydantic_extra_types.language_code import LanguageAlpha2
-from sqlalchemy import TIMESTAMP, Cast, Select, cast, select
+from sqlalchemy import TIMESTAMP, Cast, Select, String, cast, select
 from sqlalchemy.sql.functions import func
 from sqlalchemy.sql.functions import now as db_now
 
@@ -35,6 +35,7 @@ class SearchComputationsView(ClimatoologyViewBase):
         .join(PluginInfoTable, ComputationTable.plugin_key == PluginInfoTable.key)
         .join(TaskExtended, ComputationTable.correlation_uuid == TaskExtended.task_id)
         .join(ComputationLookupTable, ComputationLookupTable.computation_id == ComputationTable.correlation_uuid)
+        .where(cast(ComputationLookupTable.user_correlation_uuid, String) == ComputationLookupTable.computation_id)
         .where(PluginInfoTable.latest)
         .where(ComputationTable.valid_until > db_utc_now())
         .where(TaskExtended.status == ComputationState.SUCCESS)
@@ -48,12 +49,14 @@ class SearchComputationsView(ClimatoologyViewBase):
 
     @staticmethod
     def search_for(
-        *, ordered: bool = True, plugin_id: Optional[str] = None, languages: Optional[list[LanguageAlpha2]] = None
+        *, plugin_id: Optional[str] = None, languages: Optional[list[LanguageAlpha2]] = None, ordered: bool = True
     ) -> Select:
         """Create a select statement to search for valid computations that meet the given criteria."""
         search_query = select(SearchComputationsView)
+
         if plugin_id is not None:
             search_query = search_query.where(SearchComputationsView.plugin_id == plugin_id)
+
         if languages is not None:
             search_query = search_query.where(SearchComputationsView.language.in_(languages))
 

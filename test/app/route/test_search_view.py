@@ -119,6 +119,30 @@ def test_search_computations_view_only_boundaries(default_backend_db, searchable
         assert len(results) == 1
 
 
+def test_search_computations_view_only_original_computation(
+    default_backend_db, searchable_computations, backend_with_computation_deduplicated, deduplicated_uuid
+):
+    with Session(default_backend_db.engine) as session:
+        valid_computation_select = select(SearchComputationsView)
+        result_scalars = session.scalars(valid_computation_select)
+        results = result_scalars.fetchall()
+
+        assert len(results) == 2
+
+        # Make the deduplicated computation searchable
+        session.execute(
+            update(ComputationLookupTable)
+            .where(ComputationLookupTable.user_correlation_uuid == deduplicated_uuid)
+            .values(aoi_properties={'original_type': 'Boundary'})
+        )
+
+        valid_computation_select = select(SearchComputationsView)
+        result_scalars = session.scalars(valid_computation_select)
+        results = result_scalars.fetchall()
+
+        assert len(results) == 2
+
+
 def test_search_computations_view_search_for_language(default_backend_db, searchable_computations):
     """Search for language returns expected number of computations."""
     # Although we could parametrize this test, it's faster and not too messy to duplicate assertions

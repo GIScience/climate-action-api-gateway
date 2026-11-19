@@ -33,7 +33,7 @@ async def search(
     request: Request, plugin_id: Optional[str] = None, lang: Annotated[Optional[list[LanguageAlpha2]], Query()] = None
 ) -> GatewayCursorPage[SearchResponse]:
     with Session(request.app.state.platform.backend_db.engine) as session:
-        search_query = SearchComputationsView.search_for(ordered=True, plugin_id=plugin_id, languages=lang)
+        search_query = SearchComputationsView.search_for(plugin_id=plugin_id, languages=lang, ordered=True)
 
         try:
             page = paginate(conn=session, query=search_query)
