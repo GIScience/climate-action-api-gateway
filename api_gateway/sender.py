@@ -142,8 +142,8 @@ class CelerySender:
                 for info in result:
                     try:
                         valid_info = PluginInfoResponse.model_validate(info)
-                    except ValidationError:
-                        log.warning(f'Plugin info of {info.id} is in a broken state in the database.')
+                    except ValidationError as e:
+                        log.warning(f'Plugin info of {info.id} is in a broken state in the database.', exc_info=e)
                         continue
 
                     if info.id in active_plugins:
