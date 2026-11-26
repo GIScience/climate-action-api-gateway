@@ -4,12 +4,8 @@ stages:
   - build
   - deploy
 
-unit_tests:
+.test-template:
   stage: test
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"
-    - if: $CI_PIPELINE_SOURCE == "pipeline"
   image:
     name: python:3.13
   services:
@@ -24,6 +20,20 @@ unit_tests:
     POSTGRES_USER: username
     POSTGRES_PASSWORD: password
     POSTGRES_HOST_AUTH_METHOD: trust
+
+
+.test-before-script: &test-before-script
+  - python3 -m venv $POETRY_HOME
+  - $POETRY_HOME/bin/pip install poetry==2.5.1
+  - export PATH="$PATH:$POETRY_HOME/bin"
+  - poetry config virtualenvs.in-project true
+  - poetry sync --with test,dev
+
+unit_tests:
+  extends: .test-template
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"
   cache:
     key: $CI_COMMIT_REF_NAME
     paths:
@@ -31,12 +41,7 @@ unit_tests:
       - $POETRY_HOME
       - .venv
   before_script:
-    - python3 -m venv $POETRY_HOME
-    - $POETRY_HOME/bin/pip install poetry==2.5.1
-    - export PATH="$PATH:$POETRY_HOME/bin"
-    - poetry config virtualenvs.in-project true
-    - poetry sync --with test,dev
-    - poetry update climatoology # trigger re-fetch from climatoology main branch on plugin development branch
+    - *test-before-script
   script:
     - poetry run pytest -x --cov --cov-report term --cov-report xml:coverage.xml
     - poetry run pre-commit run --all-files
@@ -48,6 +53,26 @@ unit_tests:
         path: coverage.xml
     paths:
       - coverage.xml
+
+test_climatoology_main:
+  extends: .test-template
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "pipeline"
+  cache:
+    key: climatoology-main-$CI_COMMIT_REF_NAME
+    paths:
+      - $POETRY_HOME
+      - .venv
+  before_script:
+    - *test-before-script
+    - poetry add git+https://gitlab.heigit.org/climate-action/climatoology.git@main
+    - poetry add --group test git+https://gitlab.heigit.org/climate-action/climatoology.git@main[fixtures]
+    - poetry sync --with test,dev
+  script:
+    - poetry run pytest -x
+  allow_failure:
+    exit_codes:
+      - 1
 
 test_coverage_threshold:
   stage: test-coverage
